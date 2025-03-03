@@ -30,14 +30,17 @@ io.sockets.on('connection', (socket: any) => {
     console.log('socket connection %s', socket.id)
     console.log('sockets: %s', SOCKET_LIST)
 
+    socket.emit('new_con', { id: socket.id })
+
     socket.on('disconnect', () => {
         console.log('socket disconnection')
+        socket.emit('del_con', { id: socket.id })
         delete SOCKET_LIST[socket.id]
     })
 })
 
 setInterval(() => {
-    let pack = []
+    let pack: { [key: string]: any } = {};
     for (let i in SOCKET_LIST) {
         let socket = SOCKET_LIST[i]
         socket.x += 5
@@ -46,11 +49,10 @@ setInterval(() => {
             socket.x = 0
             socket.y = 0
         }
-        pack.push({
-            id: socket.id,
+        pack[socket.id] = {
             x: socket.x,
-            y: socket.y
-        })
+            y: socket.y,
+        }
     }
     for (let i in SOCKET_LIST) {
         let socket = SOCKET_LIST[i]
