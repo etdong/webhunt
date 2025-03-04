@@ -8,15 +8,13 @@ export default function drawPlayers(k: KAPLAYCtx, socket: any) {
     })
 
     socket.on('socket_info', (data: any) => {
-        for (let i in data) {
+        for (let i = 0; i < data.length; i++) {
             if (players[i] === undefined) {
                 players[i] = k.add([
-                    k.text(i, { size: 32 }),
-                    k.pos(data[i].x, data[i].y),
+                    k.text(data[i], { size: 32 }),
+                    k.pos(0, 80 * i),
                     k.color(255, 0, 255),
                 ]);
-            } else {
-                players[i].pos = k.vec2(data[i].x, data[i].y);
             }
         }
         
