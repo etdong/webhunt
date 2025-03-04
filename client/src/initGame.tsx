@@ -23,5 +23,5 @@ export default async function initGame() {
     init_game(k)
 
     let data = {socket: socket}
-	k.go('game', data)
+	k.go('menu', data)
 }

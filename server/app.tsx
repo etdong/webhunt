@@ -24,14 +24,15 @@ serv.listen(2001, () => {
 
 
 let SOCKET_LIST: { [key: string]: any } = {};
-let socket_words: { [key: string]: string[] } = {};
 let leaderboard: { [key: string]: number } = {};
-let done_count = 0;
+let board: { [key: number]: string[] } = {};
+let all_ready = false;
 
 io.sockets.on('connection', (socket: any) => {
     socket.id = Math.random()
+    socket.words = []
+    socket.ready = false;
     SOCKET_LIST[socket.id] = socket
-    socket_words[socket.id] = []
 
     console.log('socket connection %s', socket.id)
     console.log('sockets: %s', SOCKET_LIST)
@@ -41,15 +42,22 @@ io.sockets.on('connection', (socket: any) => {
         delete SOCKET_LIST[socket.id]
     })
 
-    socket.on('start', () => {
+    socket.on('signal_start', (size: any) => {
         leaderboard = {}
         for (let i in SOCKET_LIST) {
             let socket = SOCKET_LIST[i]
-            socket.emit('game_start')
+            socket.emit('enter_lobby')
         }
+        for (let i = 0; i < size; i++) {
+            board[i] = []
+            for (let j = 0; j < size; j++) {
+                board[i].push(String.fromCharCode(65 + Math.floor(Math.random() * 26)))
+            }
+        }
+        console.log(board)
     })
 
-    socket.on('final_score', (data: any) => {
+    socket.on('submit_score', (data: any) => {
         leaderboard[data.id] = data.score;
     })
 
@@ -60,11 +68,17 @@ io.sockets.on('connection', (socket: any) => {
         }
     })
 
+    socket.on('signal_ready', (id: number) => {
+        socket.ready = true;
+        console.log(id + ' is ready')
+        all_ready = check_ready()
+    })
+
     socket.on('word', (data: any) => {
         console.log('word received:', data.word)
         if (wordList.includes(data.word)) {
-            if (!socket_words[socket.id].includes(data.word)) {
-                socket_words[socket.id].push(data.word)
+            if (!socket.words.includes(data.word)) {
+                socket.words.push(data.word)
 
                 let score = 0
                 switch (data.word.length) {
@@ -101,6 +115,16 @@ io.sockets.on('connection', (socket: any) => {
     })
 })
 
+function check_ready() {
+    for (let i in SOCKET_LIST) {
+        let socket = SOCKET_LIST[i]
+        if (!socket.ready) {
+            return false;
+        }
+    }
+    return true;
+}
+
 setInterval(() => {
     let pack: number[] = [];
     for (let i in SOCKET_LIST) {
@@ -111,4 +135,18 @@ setInterval(() => {
         socket.emit('socket_info', pack)
     }
 }, 1000/30)
+
+setInterval(() => {
+    if (all_ready) {
+        for (let i in SOCKET_LIST) {
+            let socket = SOCKET_LIST[i]
+            socket.emit('game_start')
+            socket.emit('board', board)
+            socket.ready = false;
+        }
+        all_ready = false;
+    }
+}, 1000)
+
+
 

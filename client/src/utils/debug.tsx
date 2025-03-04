@@ -1,11 +1,7 @@
 import { KAPLAYCtx } from "kaplay";
 
-export default function drawPlayers(k: KAPLAYCtx, socket: any) {
+export default function debug_Players(k: KAPLAYCtx, socket: any) {
     let players: { [key: string]: any } = {};
-    
-    socket.on('new_con', (data: any) => {
-        
-    })
 
     socket.on('socket_info', (data: any) => {
         for (let i = 0; i < data.length; i++) {
@@ -15,6 +11,8 @@ export default function drawPlayers(k: KAPLAYCtx, socket: any) {
                     k.pos(0, 80 * i),
                     k.color(255, 0, 255),
                 ]);
+            } else {
+                players[i].text = data[i];
             }
         }
         

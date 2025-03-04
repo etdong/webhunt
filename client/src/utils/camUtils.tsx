@@ -18,3 +18,8 @@ export const updateCamPos = (k: KAPLAYCtx, posVec2: any) => {
     )
 }
 
+// relative mouse position depending on camera position and scale
+export const getRelativeMousePos = (k: KAPLAYCtx) => {
+    return k.vec2(k.getCamPos().add((k.mousePos().x - k.center().x) / k.getCamScale().x, (k.mousePos().y - k.center().y) / k.getCamScale().y))
+}
+
