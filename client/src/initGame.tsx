@@ -11,14 +11,8 @@ export default async function initGame() {
     k.loadFont('gaegu', './fonts/Gaegu-Regular.ttf')
 
     // load letters
-    k.loadSprite('w', './letters/w.png')
-    k.loadSprite('e', './letters/e.png')
-    k.loadSprite('b', './letters/b.png')
-    k.loadSprite('h', './letters/h.png')
-    k.loadSprite('u', './letters/u.png')
-    k.loadSprite('n', './letters/n.png')
-    k.loadSprite('t', './letters/t.png')
-
+    for (let i = 0; i < 26; i++)
+        k.loadSprite(`${String.fromCharCode(97 + i)}`, `./letters/${String.fromCharCode(65 + i)}.png`)
 
 	
     // scenes
