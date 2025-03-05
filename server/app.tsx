@@ -13,11 +13,7 @@ app.use('/', express.static(__dirname + '/'));
 
 const serv = http.createServer(app)
 
-const io = new Server(serv, {
-    cors: {
-        methods: ["GET", "POST"],
-    },
-})
+const io = new Server(serv, {})
 
 serv.listen(process.env.PORT || 2001, () => {
     var host = serv.address().address
