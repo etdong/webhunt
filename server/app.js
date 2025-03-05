@@ -46,8 +46,8 @@ app.use('/', express.static(__dirname + '/'));
 const serv = http.createServer(app);
 const io = new Server(serv, {});
 serv.listen(process.env.PORT || 2001, () => {
-    var host = serv.address().address;
-    var port = serv.address().port;
+    var host = app.address().address;
+    var port = app.address().port;
     console.log('App listening at https://%s:%s', host, port);
 });
 let SOCKET_LIST = {};
