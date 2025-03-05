@@ -17,7 +17,7 @@ const serv = http.createServer(app)
 
 const io = new Server(serv, {
     cors: {
-        origin: "https://webhunt.onrender.com",
+        origin: "https://etdong.github.io/webhunt/",
         methods: ["GET", "POST"]
     }
 })

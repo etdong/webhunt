@@ -3,7 +3,7 @@ import init_game from "./scenes/game";
 import init_menu from "./scenes/menu";
 
 import io from 'socket.io-client';
-const socket = io("http://localhost:2001");
+const socket = io("https://webhunt.onrender.com:2001");
 
 export default async function initGame() {
     const k = makeKaplayCtx();
