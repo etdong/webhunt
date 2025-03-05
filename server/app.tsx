@@ -1,6 +1,7 @@
 import express from 'express';
 import http from 'http';
 import { Server } from 'socket.io'
+import cors from 'cors';
 import * as fs from 'fs';
 const wordList = fs.readFileSync('words.txt','utf8').replace(/(\r)/gm, "").split('\n');
 
@@ -10,7 +11,7 @@ const app = express()
 app.get('/', (req: any, res: any) => {
     res.sendFile(__dirname + '/index.html');
 });
-app.use('/', express.static(__dirname + '/'));
+app.use(cors());
 
 const serv = http.createServer(app)
 

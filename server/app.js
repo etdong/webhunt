@@ -39,6 +39,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const http_1 = __importDefault(require("http"));
 const socket_io_1 = require("socket.io");
+const cors_1 = __importDefault(require("cors"));
 const fs = __importStar(require("fs"));
 const wordList = fs.readFileSync('words.txt', 'utf8').replace(/(\r)/gm, "").split('\n');
 const port = process.env.PORT || 2001;
@@ -46,7 +47,7 @@ const app = (0, express_1.default)();
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/index.html');
 });
-app.use('/', express_1.default.static(__dirname + '/'));
+app.use((0, cors_1.default)());
 const serv = http_1.default.createServer(app);
 const io = new socket_io_1.Server(serv, {
     cors: {
