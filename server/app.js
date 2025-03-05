@@ -51,7 +51,7 @@ app.use((0, cors_1.default)());
 const serv = http_1.default.createServer(app);
 const io = new socket_io_1.Server(serv, {
     cors: {
-        origin: "https://etdong.github.io/webhunt/",
+        origin: "https://webhunt-client.onrender.com",
         methods: ["GET", "POST"]
     }
 });
