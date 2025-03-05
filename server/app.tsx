@@ -13,12 +13,12 @@ const serv = http.createServer(app)
 
 const io = new Server(serv, {
     cors: {
-        origin: "https://etdong.github.io/webhunt/",
+        origin: "/",
         methods: ["GET", "POST"],
     },
 })
 
-http.listen(process.env.PORT || 2001, function() {
+http.listen(process.env.PORT || 2001, () => {
     var host = http.address().address
     var port = http.address().port
     console.log('App listening at https://%s:%s', host, port)
