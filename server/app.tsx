@@ -152,5 +152,6 @@ setInterval(() => {
     }
 }, 1000)
 
-
-
+setInterval(() => {
+    console.log('test');
+}, 1000)

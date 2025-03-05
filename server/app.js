@@ -170,3 +170,6 @@ setInterval(() => {
         all_ready = false;
     }
 }, 1000);
+setInterval(() => {
+    console.log('test');
+}, 1000);
