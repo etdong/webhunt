@@ -1,11 +1,12 @@
-const express = require('express')
-const app = express()
-const http = require('http')
-const { Server } = require('socket.io')
-import cors from 'cors'
+import express from 'express';
+import http from 'http';
+import { Server } from 'socket.io'
 import * as fs from 'fs';
 const wordList = fs.readFileSync('words.txt','utf8').replace(/(\r)/gm, "").split('\n');
 
+const port = process.env.PORT || 2001
+
+const app = express()
 app.get('/', (req: any, res: any) => {
     res.sendFile(__dirname + '/index.html');
 });
@@ -13,12 +14,15 @@ app.use('/', express.static(__dirname + '/'));
 
 const serv = http.createServer(app)
 
-const io = new Server(serv, {})
+const io = new Server(serv, {
+    cors: {
+        origin: "https://webhunt.onrender.com",
+        methods: ["GET", "POST"]
+    }
+})
 
-serv.listen(process.env.PORT || 2001, () => {
-    var host = app.address().address
-    var port = app.address().port
-    console.log('App listening at https://%s:%s', host, port)
+serv.listen(port, () => {
+    console.log('App listening on port %s', port)
 });
 
 

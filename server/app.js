@@ -32,23 +32,30 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-const express = require('express');
-const app = express();
-const http = require('http');
-const { Server } = require('socket.io');
+const express_1 = __importDefault(require("express"));
+const http_1 = __importDefault(require("http"));
+const socket_io_1 = require("socket.io");
 const fs = __importStar(require("fs"));
 const wordList = fs.readFileSync('words.txt', 'utf8').replace(/(\r)/gm, "").split('\n');
+const port = process.env.PORT || 2001;
+const app = (0, express_1.default)();
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/index.html');
 });
-app.use('/', express.static(__dirname + '/'));
-const serv = http.createServer(app);
-const io = new Server(serv, {});
-serv.listen(process.env.PORT || 2001, () => {
-    var host = app.address().address;
-    var port = app.address().port;
-    console.log('App listening at https://%s:%s', host, port);
+app.use('/', express_1.default.static(__dirname + '/'));
+const serv = http_1.default.createServer(app);
+const io = new socket_io_1.Server(serv, {
+    cors: {
+        origin: "https://webhunt.onrender.com",
+        methods: ["GET", "POST"]
+    }
+});
+serv.listen(port, () => {
+    console.log('App listening on port %s', port);
 });
 let SOCKET_LIST = {};
 let leaderboard = {};
