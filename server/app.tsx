@@ -6,21 +6,22 @@ import cors from 'cors'
 import * as fs from 'fs';
 const wordList = fs.readFileSync('words.txt','utf8').replace(/(\r)/gm, "").split('\n');
 
-
-app.use(cors())
+app.get('/', (req: any, res: any) => {
+    res.sendFile(__dirname + '/index.html');
+});
+app.use('/', express.static(__dirname + '/'));
 
 const serv = http.createServer(app)
 
 const io = new Server(serv, {
     cors: {
-        origin: "/",
         methods: ["GET", "POST"],
     },
 })
 
-http.listen(process.env.PORT || 2001, () => {
-    var host = http.address().address
-    var port = http.address().port
+serv.listen(process.env.PORT || 2001, () => {
+    var host = serv.address().address
+    var port = serv.address().port
     console.log('App listening at https://%s:%s', host, port)
 });
 
