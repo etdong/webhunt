@@ -76,6 +76,7 @@ serv.listen(2001, () => {
 
 class Player {
     id: string;
+    name: string;
     socket: any;
     words: string[] = [];
     score: number = 0;
@@ -85,6 +86,7 @@ class Player {
     constructor(socket: any) {
         this.id = socket.id;
         this.socket = socket;
+        this.name = 'Guest_' + generateRandomString(4);
     }    
 
     addWord(word: string) {
@@ -100,16 +102,22 @@ class Room {
     id: string;
     name: string;
     owner: Player;
+    max_players: number;
+    round_time: number;
+    board_size: number;
     players: { [key: string]: Player } = {};
     leaderboard: { [key: string]: number } = {};
     board: { [key: number]: string[] } = {};
     all_ready: boolean = false;
 
-    constructor(id: string, name: string, owner: Player) {
+    constructor(id: string, owner: Player, name: string, max_players: number, round_time: number, board_size: number) {
         this.id = id;
-        this.name = name;
         this.owner = owner;
         this.join(owner);
+        this.name = name;
+        this.max_players = max_players;
+        this.round_time = round_time;
+        this.board_size = board_size;
         console.log('created room %s', this.id)
     }
 
@@ -139,6 +147,11 @@ class Room {
         if (Object.keys(this.players).length === 0) {
             console.log('room %s is empty, deleting', this.id)
             delete room_list[this.id];
+            return
+        }
+
+        if (player === this.owner) {
+            this.owner = this.players[Object.keys(this.players)[0]];
         }
     }
 
@@ -161,7 +174,6 @@ let player_list: { [key: string]: any } = {};
 let room_list: { [key: string]: Room } = {};
 
 io.sockets.on('connection', (socket: any) => {
-    socket.id = uuid.generate();
     let new_player = new Player(socket);
     player_list[socket.id] = new_player;
 
@@ -170,30 +182,78 @@ io.sockets.on('connection', (socket: any) => {
 
     socket.on('disconnect', () => {
         console.log('socket disconnection %s', socket.id)
+        for (let i in room_list) {
+            let room = room_list[i];
+            if (room.players[socket.id] !== undefined) {
+                room.leave(player_list[socket.id])
+            }
+        }
         delete player_list[socket.id]
     })
 
-    socket.on('create_room', (data: any) => {
-        let owner = player_list[data.socketId];
-        let room = new Room(uuid.generate(), data.roomName, owner);
+    socket.on('login', (socketId: string, name: string) => {
+        console.log('login: ', name)
+        let player = player_list[socketId];
+        if (player === undefined) return;
+        player.name = name;
+    })
+
+    socket.on('create_room', (socketId: string, data: any) => {
+        let owner = player_list[socketId];
+        if (owner === undefined) return;
+        let id = generateRandomString(4);
+        while (room_list[id] !== undefined) {   
+            id = generateRandomString(4);
+        }
+        let room = new Room(
+            id,
+            owner,
+            data.name, 
+            data.max_players,
+            data.round_time,
+            data.board_size
+        );
         room_list[room.id] = room;
-        socket.to(data.socketId).emit('room_created', room.id)
+        owner.socket.join(room.id)
+        owner.socket.emit('room_created', room.id)
     })
 
-    socket.on('join_room', (data: any) => {
-        let room = room_list[data.roomId];
-        room.join(player_list[data.socketId]);
-        socket.to(data.socketId).emit('room_joined', room.id)
+    socket.on('join_room', (socketId: string, roomId: string) => {
+        let room = room_list[roomId];
+        let player = player_list[socketId];
+
+        if (room === undefined) {
+            player.socket.emit('room_not_found')
+            return;
+        };
+
+        if (Object.keys(room.players).length + 1 > room.max_players) {
+            player.socket.emit('room_full')
+            return;
+        }
+
+        room.join(player);
+        player.socket.emit('room_joined', room.id)
     })
 
-    socket.on('leave_room', (data: any) => {
-        let room = room_list[data.roomId];
-        room.leave(player_list[data.socketId]);
-        socket.to(data.socketId).emit('room_left', room.id)
+    socket.on('leave_room', (socketId: string, roomId: string) => {
+        let room = room_list[roomId];
+        if (room === undefined) return;
+        room.leave(player_list[socketId]);
     })
 
-    socket.on('request_login', (data: any) => {
-        console.log('login request: ' + data.username + ' ' + data.password)
+    socket.on('request_rooms', (socketId) => {
+        let pack = [];
+        for (let i in room_list) {
+            let room = room_list[i];
+            let data = {
+                name: room.name,
+                cur_players: Object.keys(room.players).length,
+                max_players: room.max_players,
+            }
+            pack.push(data);
+        }
+        player_list[socketId].socket.emit('rooms_list', pack)
     })
 
     socket.on('word', (data: any) => {
@@ -202,7 +262,7 @@ io.sockets.on('connection', (socket: any) => {
             if (!socket.words.includes(data.word)) {
                 socket.words.push(data.word)
 
-                let score = 0
+                let score = 0;
                 switch (data.word.length) {
                     case 3:
                         score = 100;
@@ -240,10 +300,41 @@ io.sockets.on('connection', (socket: any) => {
 setInterval(() => {
     let pack: string[] = [];
     for (let i in player_list) {
-        pack.push(player_list[i].id)
+        pack.push(player_list[i].socket.id)
     }
     for (let i in player_list) {
         let target = player_list[i].socket
         target.emit('socket_info', pack)
     }
+
+    for (let i in room_list) {
+        let room = room_list[i];
+        let data = {
+            id: room.id,
+            name: room.name,
+            max_players: room.max_players,
+            round_time: room.round_time,
+            board_size: room.board_size,
+            player_names: Object.values(room.players).map((player: Player) => player.name),
+        }
+        for (let j in room.players) {
+            let player = room.players[j];
+            if (player == room.owner)
+                player.socket.emit('room_info', data, true)
+            else 
+                player.socket.emit('room_info', data, false)
+        }
+    }
 }, 1000/30)
+
+function generateRandomString(length: number) {
+    const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    let result = "";
+ 
+    for (let i = 0; i < length; i++) {
+       const randomIndex = Math.floor(Math.random() * charset.length);
+       result += charset[randomIndex];
+    }
+ 
+    return result;
+ }
