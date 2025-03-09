@@ -1,14 +1,10 @@
 import { KAPLAYCtx } from "kaplay";
 import { updateCamPos, updateCamZoom } from "../utils/camUtils";
 
-import debug_Players from "src/utils/debug";
-
 import socket from "src/components/socket";
 
 export default function init_create_room(k: KAPLAYCtx) {
     k.scene('create_room', () => {
-
-        debug_Players(k, socket);
 
         let background = k.add([
             k.rect(k.width(), k.height()),
@@ -85,19 +81,20 @@ export default function init_create_room(k: KAPLAYCtx) {
                 k.wait(0.5, () => create.color = k.rgb(0, 0, 0));
                 return;
             }
-            let data = {
+            let room_info = {
                 name: fields[0].text,
                 max_players: parseInt(fields[1].text),
                 round_time: parseInt(fields[2].text.split('s')[0]),
                 board_size: parseInt(fields[3].text.split('x')[0]),
             }
 
-            socket.emit('create_room', socket.id, data)
-        })
-
-        socket.off('room_created').on('room_created', (roomId: string) => {
-            console.log('room created: ' + roomId)
-            k.go('room', roomId);
+            socket.emit('create_room', socket.id, room_info, (response: any) => {
+                if (response === 'ok') {
+                    k.go('room');
+                } else {
+                    console.log(response.message);
+                }
+            })
         })
 
         k.onUpdate(() => {

@@ -78,6 +78,7 @@ class Player {
     id: string;
     name: string;
     socket: any;
+    loggedIn: boolean = false;
     words: string[] = [];
     score: number = 0;
     isReady: boolean = false;
@@ -202,11 +203,20 @@ io.sockets.on('connection', (socket: any) => {
         let player = player_list[socketId];
         if (player === undefined) return;
         player.name = name;
+        player.loggedIn = true;
     })
 
-    socket.on('create_room', (socketId: string, data: any) => {
+    socket.on('check_login', (socketId: string, callback: any) => {
+        let player = player_list[socketId];
+        if (player === undefined) return;
+        callback(player.loggedIn)
+    })
+
+    socket.on('create_room', (socketId: string, room_info: any, callback: any) => {
         let owner = player_list[socketId];
-        if (owner === undefined) return;
+        if (owner === undefined) {
+            callback({ status: 'error', message: 'current player doesnt exist' });
+        };
         owner.isReady = true;
         let id = generateRandomString(4);
         while (room_list[id] !== undefined) {   
@@ -215,32 +225,32 @@ io.sockets.on('connection', (socket: any) => {
         let room = new Room(
             id,
             owner,
-            data.name, 
-            data.max_players,
-            data.round_time,
-            data.board_size
+            room_info.name, 
+            room_info.max_players,
+            room_info.round_time,
+            room_info.board_size
         );
         room_list[room.id] = room;
         owner.socket.join(room.id)
-        owner.socket.emit('room_created', room.id)
+        callback({ status: 'ok', room_id: room.id })
     })
 
-    socket.on('join_room', (socketId: string, roomId: string) => {
+    socket.on('join_room', (socketId: string, roomId: string, callback: any) => {
         let room = room_list[roomId];
         let player = player_list[socketId];
 
         if (room === undefined) {
-            player.socket.emit('room_not_found')
+            callback({ status: 'room_not_found' })
             return;
         };
 
         if (Object.keys(room.players).length + 1 > room.max_players) {
-            player.socket.emit('room_full')
+            callback({ status: 'room_full' })
             return;
         }
 
         room.join(player);
-        player.socket.emit('room_joined', room.id)
+        callback({ status: 'ok' })
     })
 
     socket.on('leave_room', (socketId: string, roomId: string) => {
@@ -249,8 +259,11 @@ io.sockets.on('connection', (socket: any) => {
         room.leave(player_list[socketId]);
     })
 
-    socket.on('request_rooms', (socketId: string) => {
-        if (player_list[socketId] === undefined) return;
+    socket.on('request_rooms', (socketId: string, callback: any) => {
+        if (player_list[socketId] === undefined) {
+            callback({ status: 'error', message: 'requesting player not found' });
+            return;
+        };
         let pack = [];
         for (let i in room_list) {
             let room = room_list[i];
@@ -262,7 +275,7 @@ io.sockets.on('connection', (socket: any) => {
             }
             pack.push(data);
         }
-        player_list[socketId].socket.emit('rooms_list', pack)
+        callback({ status: 'ok', rooms: pack })
     })
 
     socket.on('signal_ready', (socketId: string, roomId: string) => {
@@ -273,8 +286,8 @@ io.sockets.on('connection', (socket: any) => {
         else player.isReady = !player.isReady;
     })
 
-    socket.on('request_start', (roomId: string) => {
-        console.log('start requested from room %s', roomId)
+    socket.on('signal_start', (roomId: string, callback: any) => {
+        console.log('start signalled from room %s', roomId)
         let room = room_list[roomId];
         if (room.startGame()) {
             for (let i in room.players) {
@@ -283,11 +296,14 @@ io.sockets.on('connection', (socket: any) => {
         }
     })
 
-    socket.on('submit_score', (socketId: string, score: number) => {
+    socket.on('submit_score', (socketId: string, score: number, callback: any) => {
         let player = player_list[socketId];
-        if (player === undefined) return;
+        if (player === undefined) {
+            callback({ status: 'error', message: 'player not found' });
+            return;
+        };
         player.score = score;
-        player.socket.emit('score_submitted')
+        callback({ status: 'ok', message: ''})
     })
 
     socket.on('signal_finish', (socketId: string, roomId: string) => {
@@ -305,7 +321,7 @@ io.sockets.on('connection', (socket: any) => {
         }
     })
 
-    socket.on('word', (socketId: string, word: string) => {
+    socket.on('word', (socketId: string, word: string, callback: any) => {
         console.log('word received:', word)
         let player = player_list[socketId];
         if (player === undefined) return;
@@ -336,10 +352,10 @@ io.sockets.on('connection', (socket: any) => {
                 }
 
                 console.log('score:', score)
-                player.socket.emit('score', score)
+                callback({ status: 'ok', score: score })
             } else {
                 console.log('repeated')
-                player.socket.emit('word_repeated')
+                callback({ status: 'repeated' })
             }
             
         } else {

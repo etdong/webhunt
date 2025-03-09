@@ -17,8 +17,6 @@ export default function init_game(k: KAPLAYCtx) {
         let size = Object.keys(board).length;
         let side_length = 128 * size;
 
-        socket.emit('signal_ready', socket.id);
-
         // component drawing
         let board_container = drawBoard(k, size);
 
@@ -57,27 +55,16 @@ export default function init_game(k: KAPLAYCtx) {
             time -= 1;
             timer_output.text = time.toString();
             if (time <= 0) {
-                socket.emit('submit_score', socket.id, total_score);
+                socket.emit('submit_score', socket.id, total_score, (response: any) => {
+                    if (response.status === 'ok') {
+                        k.go('scores', room_id);
+                    } else {
+                        console.log(response.message);
+                    }
+                });
             }
         })
         
-
-        // socket handling
-
-        socket.on('score_submitted', () => {
-            k.go('scores', room_id);
-        })
-
-        socket.on('score', (score: number) => {
-            total_score += score;
-            score_output.text = 'score: ' + total_score;
-            word_output.text += score;
-        })
-
-        socket.on('word_repeated', () => {
-            word_output.text += 'already found'
-        })
-
         for (let i = 0; i < size; i++) {
             for (let j = 0; j < size; j++) {    
                 k.add([
@@ -139,7 +126,15 @@ export default function init_game(k: KAPLAYCtx) {
                     word += letter.tags[1];
                 })
                 word_output.text = word + '\n';
-                socket.emit('word', socket.id, word);
+                socket.emit('word', socket.id, word, (response: any) => {
+                    if (response.status === 'ok') {
+                        total_score += response.score;
+                        score_output.text = 'score: ' + total_score;
+                        word_output.text += response.score;
+                    } else if (response.status === 'repeated') {
+                        word_output.text += 'already found'
+                    }
+                });
             }
             selected = [];
         })

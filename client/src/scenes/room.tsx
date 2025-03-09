@@ -106,7 +106,7 @@ export default function init_room(k: KAPLAYCtx) {
 
         start.onClick(() => {
             socket.emit('signal_ready', socket.id, room_id.text);
-            socket.emit('request_start', room_id.text);
+            socket.emit('signal_start', room_id.text);
         })
 
         socket.off('game_start').on('game_start', (board: any, round_time) => {

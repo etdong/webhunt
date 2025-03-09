@@ -53,30 +53,26 @@ export default function init_join_room(k: KAPLAYCtx) {
         })
 
         join.onClick(() => {
-            let roomId = fields[0].text;
-            if (roomId.length !== 4) {
+            let room_id = fields[0].text;
+            if (room_id.length !== 4) {
                 error.text = 'Room ID must be 4 characters long';
                 join.color = k.rgb(255, 0, 0);
                 k.wait(0.5, () => join.color = k.rgb(0, 0, 0));
                 return;
             }
-            socket.emit('join_room', socket.id, roomId);
-        })
-
-        socket.off('room_joined').on('room_joined', (roomId: string) => {
-            k.go('room', roomId);
-        })
-
-        socket.off('room_not_found').on('room_not_found', () => {
-            error.text = 'Room "' + fields[0].text + '" not found';
-            join.color = k.rgb(255, 0, 0);
-            k.wait(0.5, () => join.color = k.rgb(0, 0, 0));
-        })
-
-        socket.off('room_full').on('room_full', () => {
-            error.text = 'Room "' + fields[0].text + '" is full';
-            join.color = k.rgb(255, 0, 0);
-            k.wait(0.5, () => join.color = k.rgb(0, 0, 0));
+            socket.emit('join_room', socket.id, room_id, (response: any) => {
+                if (response.status === 'room_not_found') {
+                    error.text = 'Room "' + room_id + '" not found';
+                    join.color = k.rgb(255, 0, 0);
+                    k.wait(0.5, () => join.color = k.rgb(0, 0, 0));
+                } else if (response.status === 'room_full') {
+                    error.text = 'Room "' + room_id + '" is full';
+                    join.color = k.rgb(255, 0, 0);
+                    k.wait(0.5, () => join.color = k.rgb(0, 0, 0));
+                } else {
+                    k.go('room');
+                }
+            });
         })
 
         k.onHover('menu_button', (btn) => {
