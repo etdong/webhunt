@@ -6,6 +6,7 @@ import { updateCamPos, updateCamZoom } from "src/utils/camUtils";
 export default function init_room(k: KAPLAYCtx) {
     k.scene('room', () => {
         let player_names: string[] = [];
+        let ready_states: boolean[] = [];
 
         draw_labels(k);
 
@@ -72,23 +73,65 @@ export default function init_room(k: KAPLAYCtx) {
             k.scale(1),
             'menu_button',
         ])
+        start.hidden = true;
+
+        let ready = k.add([
+            k.text('ready', { size: 64, font: 'gaegu' }),
+            k.pos(k.center().x - 32, k.center().y + 256),
+            k.anchor('right'),
+            k.area(),
+            k.color(255, 0, 0),
+            k.scale(1),
+            'menu_button',
+            {
+                ready: false,
+            }
+        ])
+        ready.hidden = true;
 
         leave.onClick(() => {
             socket.emit('leave_room', socket.id, room_id.text);
             k.go('menu');
         })
 
-        socket.on('room_info', (room: any, isOwner: boolean) => {
+        ready.onClick(() => {
+            socket.emit('signal_ready', socket.id, room_id.text);
+            ready.ready = !ready.ready;
+            if (ready.ready) {
+                ready.color = k.rgb(0, 125, 0);
+            } else {
+                ready.color = k.rgb(255, 0, 0);
+            }
+        })
+
+        start.onClick(() => {
+            socket.emit('signal_ready', socket.id, room_id.text);
+            socket.emit('request_start', room_id.text);
+        })
+
+        socket.off('game_start').on('game_start', (board: any, round_time) => {
+            k.go('game', { 
+                board: board, 
+                round_time: round_time,
+                room_id: room_id.text,
+            });
+        })
+
+        socket.off('room_info').on('room_info', (room: any, isOwner: boolean) => {
             room_name.text = room.name;
-            player_names = room.player_names;
+            player_names = room.players.names;
+            ready_states = room.players.ready_states;
             max_players.text = room.max_players;
             round_time.text = room.round_time + 's';
             board_size.text = room.board_size + 'x' + room.board_size;
             room_id.text = room.id;
-            if (isOwner)
+            if (isOwner) {
                 start.hidden = false;
-            else
-                start.hidden = true;
+                ready.destroy()
+            } else {
+                start.destroy();
+                ready.hidden = false;
+            }
         })
 
         k.onHover('menu_button', (btn) => {
@@ -119,6 +162,15 @@ export default function init_room(k: KAPLAYCtx) {
                     size: 32,
                     font: 'gaegu',
                     pos: k.vec2(lobby.pos.x + 32, lobby.pos.y - 256 + i * 34),
+                    color: k.rgb(0, 0, 0),
+                })
+
+                k.drawText({
+                    anchor: 'right',
+                    text: ready_states[i] ? 'ready' : '',
+                    size: 32,
+                    font: 'gaegu',
+                    pos: k.vec2(lobby.pos.x + lobby.width - 32, lobby.pos.y - 256 + i * 34),
                     color: k.rgb(0, 0, 0),
                 })
             }
