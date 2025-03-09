@@ -108,7 +108,6 @@ class Player {
 class Room {
     constructor(id, owner, name, max_players, round_time, board_size) {
         this.players = {};
-        this.leaderboard = {};
         this.board = {};
         this.all_ready = false;
         this.id = id;
@@ -119,6 +118,13 @@ class Room {
         this.round_time = round_time;
         this.board_size = board_size;
         console.log('created room %s', this.id);
+    }
+    startGame() {
+        if (!this.checkReady())
+            return false;
+        this.generateBoard(this.board_size);
+        console.log('game started for room %s', this.id);
+        return true;
     }
     generateBoard(size) {
         for (let i = 0; i < size; i++) {
@@ -191,6 +197,7 @@ io.sockets.on('connection', (socket) => {
         let owner = player_list[socketId];
         if (owner === undefined)
             return;
+        owner.isReady = true;
         let id = generateRandomString(4);
         while (room_list[id] !== undefined) {
             id = generateRandomString(4);
@@ -222,6 +229,8 @@ io.sockets.on('connection', (socket) => {
         room.leave(player_list[socketId]);
     });
     socket.on('request_rooms', (socketId) => {
+        if (player_list[socketId] === undefined)
+            return;
         let pack = [];
         for (let i in room_list) {
             let room = room_list[i];
@@ -229,18 +238,63 @@ io.sockets.on('connection', (socket) => {
                 name: room.name,
                 cur_players: Object.keys(room.players).length,
                 max_players: room.max_players,
+                room_id: room.id,
             };
             pack.push(data);
         }
         player_list[socketId].socket.emit('rooms_list', pack);
     });
-    socket.on('word', (data) => {
-        console.log('word received:', data.word);
-        if (wordList.includes(data.word)) {
-            if (!socket.words.includes(data.word)) {
-                socket.words.push(data.word);
+    socket.on('signal_ready', (socketId, roomId) => {
+        let room = room_list[roomId];
+        let player = player_list[socketId];
+        if (room === undefined || player === undefined)
+            return;
+        if (room.owner == player)
+            player.isReady = true;
+        else
+            player.isReady = !player.isReady;
+    });
+    socket.on('request_start', (roomId) => {
+        console.log('start requested from room %s', roomId);
+        let room = room_list[roomId];
+        if (room.startGame()) {
+            for (let i in room.players) {
+                room.players[i].socket.emit('game_start', room.board, room.round_time);
+            }
+        }
+    });
+    socket.on('submit_score', (socketId, score) => {
+        let player = player_list[socketId];
+        if (player === undefined)
+            return;
+        player.score = score;
+        player.socket.emit('score_submitted');
+    });
+    socket.on('signal_finish', (socketId, roomId) => {
+        console.log('player %s finished', socketId);
+        let room = room_list[roomId];
+        if (room === undefined)
+            return;
+        let final_scores = [];
+        for (let i in room.players) {
+            let player = room.players[i];
+            final_scores.push([player.name, player.score]);
+        }
+        final_scores.sort((a, b) => b[1] - a[1]);
+        for (let i in room.players) {
+            room.players[i].socket.emit('update_scores', final_scores);
+        }
+    });
+    socket.on('word', (socketId, word) => {
+        console.log('word received:', word);
+        let player = player_list[socketId];
+        if (player === undefined)
+            return;
+        if (wordList.includes(word)) {
+            if (!player.words.includes(word)) {
+                player.words.push(word);
                 let score = 0;
-                switch (data.word.length) {
+                switch (word.length) {
                     case 3:
                         score = 100;
                         break;
@@ -261,11 +315,11 @@ io.sockets.on('connection', (socket) => {
                         break;
                 }
                 console.log('score:', score);
-                socket.to(data.id).emit('score', score);
+                player.socket.emit('score', score);
             }
             else {
                 console.log('repeated');
-                socket.to(data.id).emit('word_repeated');
+                player.socket.emit('word_repeated');
             }
         }
         else {
@@ -290,7 +344,10 @@ setInterval(() => {
             max_players: room.max_players,
             round_time: room.round_time,
             board_size: room.board_size,
-            player_names: Object.values(room.players).map((player) => player.name),
+            players: {
+                names: Object.values(room.players).map((player) => player.name),
+                ready_states: Object.values(room.players).map((player) => player.isReady),
+            }
         };
         for (let j in room.players) {
             let player = room.players[j];
