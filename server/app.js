@@ -140,6 +140,10 @@ class Room {
         if (Object.keys(this.players).length === 0) {
             console.log('room %s is empty, deleting', this.id);
             delete room_list[this.id];
+            return;
+        }
+        if (player === this.owner) {
+            this.owner = this.players[Object.keys(this.players)[0]];
         }
     }
     checkReady() {
