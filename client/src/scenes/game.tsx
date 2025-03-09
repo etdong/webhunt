@@ -5,14 +5,14 @@ import { updateCamPos, updateCamZoom } from "../utils/camUtils";
 import socket from "src/components/socket";
 
 export default function init_game(k: KAPLAYCtx) {
-    k.scene('game', (data) => {
+    k.scene('game', () => {
 
         // declarations
         let total_score = 0;
         let selected: any[] = [];
         let points: Vec2[] = [];
-        let time = data.time || 60;
-        let size = data.size || 4;
+        let time = 60;
+        let size = 4;
         let side_length = 128 * size;
 
         socket.emit('signal_ready', socket.id);
@@ -46,7 +46,7 @@ export default function init_game(k: KAPLAYCtx) {
         // timer setup
         let timer_output = k.add([
             k.anchor('topright'),
-            k.text(time, { size: 48, font: 'gaegu', align: 'right'}),
+            k.text(time.toString(), { size: 48, font: 'gaegu', align: 'right'}),
             k.pos(board.pos.x + board.width/2, board.pos.y - board.height/2 - 64),
             k.color(0, 0, 0),
         ]);
@@ -55,7 +55,7 @@ export default function init_game(k: KAPLAYCtx) {
             if (time > 0) {
                 k.loop(1, () => {
                     time -= 1;
-                    timer_output.text = time;
+                    timer_output.text = time.toString();
                     if (time <= 0) {
                         k.go('menu', { socket: socket, state: 'end' });
                         let data = {
