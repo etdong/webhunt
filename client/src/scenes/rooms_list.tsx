@@ -5,8 +5,8 @@ import { updateCamPos, updateCamZoom } from "src/utils/camUtils";
 
 export default function init_rooms_list(k: KAPLAYCtx) {
     k.scene('rooms_list', () => {
-
-        let rooms_list: any = [];
+        let room_objs: any[] = [];
+        socket.emit('request_rooms', socket.id);
 
         k.add([
             k.text('Rooms list', { size: 64, font: 'gaegu' }),
@@ -62,7 +62,18 @@ export default function init_rooms_list(k: KAPLAYCtx) {
             socket.emit('request_rooms', socket.id);
         })
 
+        k.onClick('room', (room) => {
+            socket.emit('join_room', socket.id, room.room_id);
+        })
+
+        socket.off('room_joined').on('room_joined', (roomId: string) => {
+            k.go('room');
+        })
+
         socket.off('rooms_list').on('rooms_list', (rooms: any) => {
+            for (let i = 0; i < room_objs.length; i++) {
+                room_objs[i].destroy();
+            }
             if (rooms.length === 0) {
                 error.text = 'No rooms available';
                 refresh.color = k.rgb(255, 0, 0);
@@ -71,12 +82,24 @@ export default function init_rooms_list(k: KAPLAYCtx) {
                 error.text = '';
                 for (let i = 0; i < rooms.length; i++) {
                     let room = rooms[i];
-                    if (!rooms_list.includes(room)) {
-                        rooms_list.push(room);
-                    };
+                    if (!(room.cur_players === room.max_players)) {
+                        let room_obj = k.add([
+                            k.text(room.name + ' (' + room.cur_players + '/' + room.max_players + ')', { size: 48, font: 'gaegu' }),
+                            k.anchor('center'),
+                            k.pos(rooms_container.pos.x, rooms_container.pos.y - 224 + i * 64),
+                            k.area(),
+                            k.scale(1),
+                            k.color(k.rgb(0, 0, 0)),
+                            'room',
+                            {
+                                room_id: room.room_id,
+                            }
+                        ])
+                        room_objs.push(room_obj);
+                    }
                 }
+                console.log(room_objs)
             } 
-            console.log(rooms_list)
         })
 
         k.onHover('menu_button', (btn) => {
@@ -99,19 +122,27 @@ export default function init_rooms_list(k: KAPLAYCtx) {
             )
         })
 
+        k.onHover('room', (btn) => {
+            k.tween(
+                btn.scale,
+                k.vec2(1.2),
+                0.1,
+                (newScale) => btn.scale = newScale,
+                k.easings.linear
+            )
+        })
+
+        k.onHoverEnd('room', (btn) => {
+            k.tween(
+                btn.scale,
+                k.vec2(1),
+                0.1,
+                (newScale) => btn.scale = newScale,
+                k.easings.linear
+            )
+        })
+
         k.onUpdate(() => {
-            for (let i = 0; i < rooms_list.length; i++) {
-                let room = rooms_list[i];
-                console.log(room)
-                k.drawText({
-                    text: room.name + ' (' + room.cur_players + '/' + room.max_players + ')',
-                    anchor: 'center',
-                    size: 48,
-                    font: 'gaegu',
-                    pos: k.vec2(k.center().x, k.center().y - 256 + i * 64),
-                    color: k.rgb(0, 0, 0),
-                })
-            }
             updateCamPos(k, rooms_container.pos);
             updateCamZoom(k);
         })
