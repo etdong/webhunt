@@ -8,6 +8,7 @@ import socket from "src/components/socket";
 import init_room from "./scenes/room";
 import init_join_room from "./scenes/join_room";
 import init_rooms_list from "./scenes/rooms_list";
+import init_scores from "./scenes/scores";
 
 export default async function initGame() {
 	const k = makeKaplayCtx()
@@ -29,6 +30,7 @@ export default async function initGame() {
     init_rooms_list(k)
     init_join_room(k)
     init_create_room(k)
+    init_scores(k)
 
-	k.go('rooms_list')
+	k.go('menu')
 }
