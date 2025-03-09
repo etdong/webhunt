@@ -149,7 +149,6 @@ export default function init_menu(k: KAPLAYCtx) {
             }
         })
 
-
         k.onMouseRelease("left", () => {
             if (clicked !== null) {
                 k.tween(
@@ -167,7 +166,7 @@ export default function init_menu(k: KAPLAYCtx) {
             updateCamZoom(k);
             for (let i in letters) {
                 if (letters[i].hidden) {
-                    letters[i].pos = k.center().sub(k.rand(-100, 100), k.rand(-100, 100));
+                    letters[i].pos = k.center().sub(k.rand(-100, 100), 300 + k.rand(-100, 100));
                 }
             }
         })
