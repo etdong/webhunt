@@ -5,31 +5,33 @@ import { updateCamPos, updateCamZoom } from "../utils/camUtils";
 import socket from "src/components/socket";
 
 export default function init_game(k: KAPLAYCtx) {
-    k.scene('game', () => {
+    k.scene('game', (data) => {
 
         // declarations
+        let board: { [key: number]: string[] } = data.board;
+        let time: number = data.round_time;
+        let room_id = data.room_id;
         let total_score = 0;
         let selected: any[] = [];
         let points: Vec2[] = [];
-        let time = 60;
-        let size = 4;
+        let size = Object.keys(board).length;
         let side_length = 128 * size;
 
         socket.emit('signal_ready', socket.id);
 
         // component drawing
-        let board = drawBoard(k, socket, size);
+        let board_container = drawBoard(k, size);
 
         let score_output = k.add([
             k.text('score:' + total_score, { size: 48, font: 'gaegu' }),
-            k.pos(board.pos.x - board.width/2, board.pos.y - board.height/2 - 64),
+            k.pos(board_container.pos.x - board_container.width/2, board_container.pos.y - board_container.height/2 - 64),
             k.color(0, 0, 0),
             'output'
         ])
 
         let word_output = k.add([
             k.text('', { size: 64, font: 'gaegu', align: 'center'}),   
-            k.pos(board.pos.x, board.pos.y + board.height/2 + 96),
+            k.pos(board_container.pos.x, board_container.pos.y + board_container.height/2 + 96),
             k.color(0, 0, 0),
             k.anchor('center'),
             'output'
@@ -38,7 +40,7 @@ export default function init_game(k: KAPLAYCtx) {
         k.add([
             k.anchor('topright'),
             k.text('time: ', { size: 48, font: 'gaegu', align: 'right'}),
-            k.pos(board.pos.x + board.width/2 - 32, board.pos.y - board.height/2 - 64),
+            k.pos(board_container.pos.x + board_container.width/2 - 32, board_container.pos.y - board_container.height/2 - 64),
             k.color(0, 0, 0),
         ]);
 
@@ -47,29 +49,24 @@ export default function init_game(k: KAPLAYCtx) {
         let timer_output = k.add([
             k.anchor('topright'),
             k.text(time.toString(), { size: 48, font: 'gaegu', align: 'right'}),
-            k.pos(board.pos.x + board.width/2, board.pos.y - board.height/2 - 64),
+            k.pos(board_container.pos.x + board_container.width/2, board_container.pos.y - board_container.height/2 - 64),
             k.color(0, 0, 0),
         ]);
 
-        socket.on('game_start', () => {
-            if (time > 0) {
-                k.loop(1, () => {
-                    time -= 1;
-                    timer_output.text = time.toString();
-                    if (time <= 0) {
-                        k.go('menu', { socket: socket, state: 'end' });
-                        let data = {
-                            id: socket.id,
-                            score: total_score,
-                        }
-                        socket.emit('submit_score', data);
-                    }
-                })
+        k.loop(1, () => {
+            time -= 1;
+            timer_output.text = time.toString();
+            if (time <= 0) {
+                socket.emit('submit_score', socket.id, total_score);
             }
         })
         
 
         // socket handling
+
+        socket.on('score_submitted', () => {
+            k.go('scores', room_id);
+        })
 
         socket.on('score', (score: number) => {
             total_score += score;
@@ -81,32 +78,29 @@ export default function init_game(k: KAPLAYCtx) {
             word_output.text += 'already found'
         })
 
-        socket.off('board').on('board', (letters: { [key: number]: string[] }) => {
-            console.log('board received:', letters);
-            for (let i = 0; i < size; i++) {
-                for (let j = 0; j < size; j++) {    
-                    k.add([
-                        k.sprite(letters[i][j]),
-                        k.scale(0.5),
-                        k.area({ shape: new k.Polygon([
-                            k.vec2(96, 0),
-                            k.vec2(160, 0),
-                            k.vec2(256, 96),
-                            k.vec2(256, 160),
-                            k.vec2(160, 256),
-                            k.vec2(96, 256),
-                            k.vec2(0, 160),
-                            k.vec2(0, 96),
-                        ])}),
-                        k.pos(k.center().sub(side_length/2 - i * 128, side_length/2 - j * 128)),
-                        letters[i][j],
-                        'letter',
-                    ])
-                }   
-            }
-            k.onDraw(() => {
-                k.drawLines({ pts: points, width: 10, color: k.rgb(255, 0, 0), cap: 'round' });
-            })
+        for (let i = 0; i < size; i++) {
+            for (let j = 0; j < size; j++) {    
+                k.add([
+                    k.sprite(board[i][j]),
+                    k.scale(0.5),
+                    k.area({ shape: new k.Polygon([
+                        k.vec2(96, 0),
+                        k.vec2(160, 0),
+                        k.vec2(256, 96),
+                        k.vec2(256, 160),
+                        k.vec2(160, 256),
+                        k.vec2(96, 256),
+                        k.vec2(0, 160),
+                        k.vec2(0, 96),
+                    ])}),
+                    k.pos(k.center().sub(side_length/2 - i * 128, side_length/2 - j * 128)),
+                    board[i][j],
+                    'letter',
+                ])
+            }   
+        }
+        k.onDraw(() => {
+            k.drawLines({ pts: points, width: 10, color: k.rgb(255, 0, 0), cap: 'round' });
         })
 
 
@@ -145,18 +139,14 @@ export default function init_game(k: KAPLAYCtx) {
                     word += letter.tags[1];
                 })
                 word_output.text = word + '\n';
-                let data = {
-                    id: socket.id,
-                    word: word,
-                }
-                socket.emit('word', data);
+                socket.emit('word', socket.id, word);
             }
             selected = [];
         })
 
         k.onUpdate(() => {
             updateCamZoom(k);
-            updateCamPos(k, board.pos);
+            updateCamPos(k, board_container.pos);
         })
     })
 
