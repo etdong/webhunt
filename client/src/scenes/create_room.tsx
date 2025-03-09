@@ -89,7 +89,7 @@ export default function init_create_room(k: KAPLAYCtx) {
             }
 
             socket.emit('create_room', socket.id, room_info, (response: any) => {
-                if (response === 'ok') {
+                if (response.status === 'ok') {
                     k.go('room');
                 } else {
                     console.log(response.message);
