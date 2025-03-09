@@ -69,7 +69,7 @@ export default function init_menu(k: KAPLAYCtx) {
             letters.push(letter);
         }
         
-        
+
         // event handlers
         k.onClick('', (object) => {
             if (object.tags.includes('letter')) {
@@ -119,7 +119,6 @@ export default function init_menu(k: KAPLAYCtx) {
                 k.easings.linear
             )
         })
-
 
         k.onHoverEnd('menu_button', (btn) => {
             k.tween(
