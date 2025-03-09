@@ -28,9 +28,10 @@ export default function init_rooms_list(k: KAPLAYCtx) {
             k.anchor('center'),
             k.outline(4)
         ])
+        k.setCamPos(rooms_container.pos)
 
-        let cancel = k.add([
-            k.text('cancel', { size: 64, font: 'gaegu' }),
+        let back = k.add([
+            k.text('back', { size: 64, font: 'gaegu' }),
             k.pos(k.center().x - 128, k.center().y + 320),
             k.anchor('center'),
             k.area(),
@@ -49,7 +50,7 @@ export default function init_rooms_list(k: KAPLAYCtx) {
             'menu_button',
         ])
 
-        cancel.onClick(() => {
+        back.onClick(() => {
             k.go('menu');
         })
 

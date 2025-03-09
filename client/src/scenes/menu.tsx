@@ -1,8 +1,8 @@
-import { GameObj, KAPLAYCtx } from "kaplay";
-import debug_Players from "../utils/debug";
+import { KAPLAYCtx } from "kaplay";
 import { getRelativeMousePos, updateCamPos, updateCamZoom } from "../utils/camUtils";
 
 import socket from "src/components/socket";
+import { draw_with_tiles } from "src/utils/drawUtils";
 
 export default function init_menu(k: KAPLAYCtx) {
     k.scene('menu', () => {
@@ -10,11 +10,14 @@ export default function init_menu(k: KAPLAYCtx) {
         // declarations
         let title = 'WEBHUNT';
         let clicked: any = null;
-        let letters: GameObj[] = [];
+        let loggedIn = false;
+
+        socket.on('logged_in', () => loggedIn = true);
+        socket.emit('check_login', socket.id, (response: any) => {
+            loggedIn = response;
+        })
 
         // draw components
-        debug_Players(k, socket);
-
         let background = k.add([
             k.rect(k.width(), k.height()),
             k.area(),
@@ -22,11 +25,12 @@ export default function init_menu(k: KAPLAYCtx) {
             k.pos(k.center()),
         ])
 
-        let menu_buttons = ['rooms list', 'create a room', 'join by code'];
+        let menu_labels = ['rooms list', 'create a room', 'join by code', 'stats'];
+        let menu_buttons: any[] = [];
 
-        for (let i = 0; i < menu_buttons.length; i++) {
-            k.add([
-                k.text(menu_buttons[i], { size: 64, font: 'gaegu' }),
+        for (let i = 0; i < menu_labels.length; i++) {
+            let button = k.add([
+                k.text(menu_labels[i], { size: 64, font: 'gaegu' }),
                 k.pos(k.width() / 2, k.height() / 2 + i * 128),
                 k.anchor('center'),
                 k.area(),
@@ -35,39 +39,11 @@ export default function init_menu(k: KAPLAYCtx) {
                 'menu_button',
                 'button_' + i,
             ]);
+            menu_buttons.push(button);
         }
 
 
-        for (let i = 0; i < title.length; i++) {
-            let letter = k.add([
-                k.anchor('center'),
-                k.sprite(title.charAt(i)),
-                k.area({ shape: new k.Polygon([
-                    k.vec2(118, 118),
-                    k.vec2(128, 100),
-                    k.vec2(128, -100),
-                    k.vec2(118, -118),
-                    k.vec2(100, -128),
-                    k.vec2(-100, -128),
-                    k.vec2(-118, -118),
-                    k.vec2(-128, -100),
-                    k.vec2(-128, 100),
-                    k.vec2(-118, 118),
-                    k.vec2(-100, 128),
-                ])}),
-                k.body(),
-                k.pos(k.width() / 2 - title.length/2 * 128 + i * 164, k.center().y - 256),
-                k.scale(0.5),
-                k.offscreen({
-                    hide: true,
-                    distance: 64,
-                }),
-                'letter',
-                title.charAt(i),
-            ]);
-
-            letters.push(letter);
-        }
+        let letters = draw_with_tiles(k, title);
         
 
         // event handlers
@@ -86,6 +62,8 @@ export default function init_menu(k: KAPLAYCtx) {
                 k.go('create_room');
             } else if (btn.text === 'join by code') {
                 k.go('join_room');
+            } else if (btn.text === 'stats') {
+                k.go('stats');
             }
         })
 
@@ -161,7 +139,18 @@ export default function init_menu(k: KAPLAYCtx) {
             }
         })
 
+        socket.on('logged_out', () => {
+            loggedIn = false;
+        })
+
         k.onUpdate(() => {
+            if (!loggedIn) {
+                menu_buttons[3].text = 'log in to see stats'
+                menu_buttons[3].color = k.rgb(128, 128, 128);
+            } else {
+                menu_buttons[3].text = 'stats';
+                menu_buttons[3].color = k.rgb(0, 0, 0);
+            }
             updateCamPos(k, background.pos);
             updateCamZoom(k);
             for (let i in letters) {

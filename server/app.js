@@ -44,10 +44,14 @@ const http_1 = __importDefault(require("http"));
 const socket_io_1 = require("socket.io");
 const passport_1 = __importDefault(require("passport"));
 const express_session_1 = __importDefault(require("express-session"));
+const Player_1 = __importDefault(require("./models/Player"));
 const client_url = process.env.CLIENT_URL;
 const uuid = (0, short_uuid_1.default)();
 // reading in the wordlist
 const wordList = fs.readFileSync('words.txt', 'utf8').replace(/(\r)/gm, "").split('\n');
+const db_1 = __importStar(require("./db"));
+const helpers_1 = require("./utils/helpers");
+const Room_1 = __importDefault(require("./models/Room"));
 // setting up server
 const app = (0, express_1.default)();
 require('./auth');
@@ -88,92 +92,13 @@ const io = new socket_io_1.Server(serv, {
 serv.listen(2001, () => {
     console.log(`Server running on 2001`);
 });
-class Player {
-    constructor(socket) {
-        this.loggedIn = false;
-        this.words = [];
-        this.score = 0;
-        this.isReady = false;
-        this.roomId = "menu";
-        this.id = socket.id;
-        this.socket = socket;
-        this.name = 'Guest_' + generateRandomString(4);
-    }
-    addWord(word) {
-        this.words.push(word);
-    }
-    addScore(score) {
-        this.score += score;
-    }
-}
-class Room {
-    constructor(id, owner, name, max_players, round_time, board_size) {
-        this.players = {};
-        this.board = {};
-        this.all_ready = false;
-        this.id = id;
-        this.owner = owner;
-        this.join(owner);
-        this.name = name;
-        this.max_players = max_players;
-        this.round_time = round_time;
-        this.board_size = board_size;
-        console.log('created room %s', this.id);
-    }
-    startGame() {
-        if (!this.checkReady())
-            return false;
-        this.generateBoard(this.board_size);
-        console.log('game started for room %s', this.id);
-        return true;
-    }
-    generateBoard(size) {
-        for (let i = 0; i < size; i++) {
-            this.board[i] = [];
-            for (let j = 0; j < size; j++) {
-                this.board[i].push(String.fromCharCode(65 + Math.floor(Math.random() * 26)));
-            }
-        }
-        console.log('generated board for room %s', this.id);
-    }
-    join(player) {
-        if (Object.keys(this.players).includes(player.id))
-            return;
-        this.players[player.id] = player;
-        player.roomId = this.id;
-        console.log('player %s joined room %s', player.id, this.id);
-    }
-    leave(player) {
-        if (!Object.keys(this.players).includes(player.id))
-            return;
-        console.log('player %s left room %s', player.id, this.id);
-        delete this.players[player.id];
-        if (Object.keys(this.players).length === 0) {
-            console.log('room %s is empty, deleting', this.id);
-            delete room_list[this.id];
-            return;
-        }
-        if (player === this.owner) {
-            this.owner = this.players[Object.keys(this.players)[0]];
-        }
-    }
-    checkReady() {
-        for (let i in this.players) {
-            let player = this.players[i];
-            if (!player.isReady) {
-                return false;
-            }
-        }
-        return true;
-    }
-}
 // player list for tracking sockets
 // key is the socket id, value is the player object
 let player_list = {};
 // 
 let room_list = {};
 io.sockets.on('connection', (socket) => {
-    let new_player = new Player(socket);
+    let new_player = new Player_1.default(socket);
     player_list[socket.id] = new_player;
     console.log('\nplayer connection %s', socket.id);
     console.log('players: %s', player_list);
@@ -187,32 +112,40 @@ io.sockets.on('connection', (socket) => {
         }
         delete player_list[socket.id];
     });
-    socket.on('login', (socketId, name) => {
+    socket.on('login', (socketId, name, googleId) => {
         console.log('login: ', name);
+        for (let i in player_list) {
+            if (player_list[i].googleId === googleId) {
+                player_list[i].socket.emit('logged_out');
+                player_list[i].googleId = "";
+            }
+        }
         let player = player_list[socketId];
         if (player === undefined)
             return;
         player.name = name;
-        player.loggedIn = true;
+        player.googleId = googleId;
+        player.socket.emit('logged_in');
     });
     socket.on('check_login', (socketId, callback) => {
         let player = player_list[socketId];
-        if (player === undefined)
-            return;
-        callback(player.loggedIn);
+        if (player === undefined || player.googleId === "")
+            callback(false);
+        callback(true);
     });
     socket.on('create_room', (socketId, room_info, callback) => {
         let owner = player_list[socketId];
         if (owner === undefined) {
             callback({ status: 'error', message: 'current player doesnt exist' });
+            return;
         }
         ;
         owner.isReady = true;
-        let id = generateRandomString(4);
+        let id = (0, helpers_1.generateRandomString)(4);
         while (room_list[id] !== undefined) {
-            id = generateRandomString(4);
+            id = (0, helpers_1.generateRandomString)(4);
         }
-        let room = new Room(id, owner, room_info.name, room_info.max_players, room_info.round_time, room_info.board_size);
+        let room = new Room_1.default(id, owner, room_info.name, room_info.max_players, room_info.round_time, room_info.board_size);
         room_list[room.id] = room;
         owner.socket.join(room.id);
         callback({ status: 'ok', room_id: room.id });
@@ -237,6 +170,10 @@ io.sockets.on('connection', (socket) => {
         if (room === undefined)
             return;
         room.leave(player_list[socketId]);
+        if (Object.keys(room.players).length === 0) {
+            console.log('room %s is empty, deleting', room.id);
+            delete room_list[room.id];
+        }
     });
     socket.on('request_rooms', (socketId, callback) => {
         if (player_list[socketId] === undefined) {
@@ -272,6 +209,8 @@ io.sockets.on('connection', (socket) => {
         let room = room_list[roomId];
         if (room.startGame()) {
             for (let i in room.players) {
+                let player = room.players[i];
+                player.reset();
                 room.players[i].socket.emit('game_start', room.board, room.round_time);
             }
         }
@@ -287,22 +226,31 @@ io.sockets.on('connection', (socket) => {
         callback({ status: 'ok', message: '' });
     });
     socket.on('signal_finish', (socketId, roomId) => {
-        console.log('player %s finished', socketId);
         let room = room_list[roomId];
-        if (room === undefined)
+        let cur_player = player_list[socketId];
+        if (room === undefined || cur_player === undefined)
             return;
-        let final_scores = [];
-        for (let i in room.players) {
-            let player = room.players[i];
-            final_scores.push([player.name, player.score]);
-        }
-        final_scores.sort((a, b) => b[1] - a[1]);
-        for (let i in room.players) {
-            room.players[i].socket.emit('update_scores', final_scores);
+        else
+            cur_player.isReady = false;
+        if (room.checkFinish()) {
+            console.log('game finished for room %s', roomId);
+            let final_scores = [];
+            for (let i in room.players) {
+                let player = room.players[i];
+                final_scores.push([player.name, player.score]);
+            }
+            final_scores.sort((a, b) => b[1] - a[1]);
+            for (let i in room.players) {
+                let player = room.players[i];
+                if (Object.keys(room.players).length !== 1) {
+                    let win = player.score === final_scores[0][1];
+                    (0, db_1.store_player)(player, win);
+                }
+                player.socket.emit('update_scores', final_scores);
+            }
         }
     });
     socket.on('word', (socketId, word, callback) => {
-        console.log('word received:', word);
         let player = player_list[socketId];
         if (player === undefined)
             return;
@@ -330,17 +278,30 @@ io.sockets.on('connection', (socket) => {
                         score = 2200;
                         break;
                 }
-                console.log('score:', score);
                 callback({ status: 'ok', score: score });
             }
             else {
-                console.log('repeated');
                 callback({ status: 'repeated' });
             }
         }
-        else {
-            console.log('word is not in wordlist');
+    });
+    socket.on('request_stats', (socketId, callback) => {
+        let player = player_list[socketId];
+        if (player === undefined) {
+            callback({ status: 'error', message: 'player not found' });
+            return;
         }
+        if (player.googleId === "") {
+            callback({ status: 'error', message: 'player not found in db' });
+            return;
+        }
+        db_1.default.connect().then(() => {
+            const db = db_1.default.db('webhunt-users');
+            const collection = db.collection('users');
+            collection.findOne({ googleId: player.googleId }).then((user) => {
+                callback({ status: 'ok', user: user });
+            });
+        });
     });
 });
 setInterval(() => {
@@ -374,12 +335,3 @@ setInterval(() => {
         }
     }
 }, 1000 / 30);
-function generateRandomString(length) {
-    const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-    let result = "";
-    for (let i = 0; i < length; i++) {
-        const randomIndex = Math.floor(Math.random() * charset.length);
-        result += charset[randomIndex];
-    }
-    return result;
-}
