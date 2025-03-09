@@ -2,11 +2,12 @@ import { GameObj, KAPLAYCtx, Vec2 } from "kaplay";
 import drawBoard from "../components/board";
 import { updateCamPos, updateCamZoom } from "../utils/camUtils";
 
+import socket from "src/components/socket";
+
 export default function init_game(k: KAPLAYCtx) {
     k.scene('game', (data) => {
 
         // declarations
-        let socket = data.socket;
         let total_score = 0;
         let selected: any[] = [];
         let points: Vec2[] = [];

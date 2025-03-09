@@ -1,12 +1,12 @@
-import makeKaplayCtx from "./kaplayCtx";
 import init_game from "./scenes/game";
 import init_menu from "./scenes/menu";
 
-import io from 'socket.io-client';
-const socket = io("http://localhost:2001");
+import makeKaplayCtx from "./kaplayCtx";
+
+import socket from 'src/components/socket';
 
 export default async function initGame() {
-    const k = makeKaplayCtx();
+	const k = makeKaplayCtx()
 
     k.setLayers(['bg', 'game', 'fg'], 'game')
 
