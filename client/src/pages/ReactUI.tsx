@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
-export default function ReactUI(socket: any) {
+import socket from "src/components/socket";
+
+export default function ReactUI() {
 
 	let c = document.getElementById('game') as HTMLCanvasElement;
     c.hidden = false;
@@ -18,7 +20,8 @@ export default function ReactUI(socket: any) {
 
 	const menuComponent = () => {
 		if (user.loggedIn) {
-			return (
+				socket.emit('login', socket.id, user.displayName);
+				return (
 				<div id='menu'>
 					<div>Logged in as {'' + user.displayName}</div>
 				</div>
