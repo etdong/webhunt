@@ -1,77 +1,199 @@
-const express = require('express')
-const app = express()
-const http = require('http')
-const { Server } = require('socket.io')
 import cors from 'cors'
 import * as fs from 'fs';
+import short from 'short-uuid';
+import express from 'express';
+import http from 'http'
+import { Server } from 'socket.io'
+import passport from 'passport';
+import session from 'express-session';
+
+const client_url = process.env.CLIENT_URL;
+const uuid = short();
+
+// reading in the wordlist
 const wordList = fs.readFileSync('words.txt','utf8').replace(/(\r)/gm, "").split('\n');
 
+// setting up server
+const app = express();
+require('./auth');
+app.use(cors({
+    origin: client_url, 
+    credentials: true,            //access-control-allow-credentials:true
+    optionsSuccessStatus: 200
+}));
+app.use(session({ secret: 'test' }))
+app.use(passport.initialize());
+app.use(passport.session());
 
-app.use(cors())
+app.get("/", (_, res) => {
+    res.send("Hello World!");
+})
+
+app.get(
+    "/auth/google", 
+    passport.authenticate('google', { 
+        scope: ['profile'] 
+    })
+);
+
+app.get(
+    "/google/callback", 
+    passport.authenticate('google', { session: true }),
+    (_, res) => {
+        res.redirect(client_url || 'http://localhost:3000');
+    }   
+);
+
+function isAuthenticated(req: any, res: any, next: any) {
+    if (req.user) next();
+    else res.json({ loggedIn: false});
+}
+
+app.get(
+    "/account",
+    isAuthenticated,
+    (req, res) => {
+        const user = {
+            ...req.user,
+            loggedIn: true
+        }
+        res.json(user);
+    }
+)
 
 const serv = http.createServer(app)
 
 const io = new Server(serv, {
     cors: {
-        origin: "http://localhost:3000",
+        origin: client_url,
         methods: ["GET", "POST"],
     },
 })
 
 serv.listen(2001, () => {
-    console.log(`Server running`)
+    console.log(`Server running on 2001`)
 })
 
+class Player {
+    id: string;
+    socket: any;
+    words: string[] = [];
+    score: number = 0;
+    isReady: boolean = false;
+    roomId: string = "menu";
 
-let SOCKET_LIST: { [key: string]: any } = {};
-let leaderboard: { [key: string]: number } = {};
-let board: { [key: number]: string[] } = {};
-let all_ready = false;
+    constructor(socket: any) {
+        this.id = socket.id;
+        this.socket = socket;
+    }    
 
-io.sockets.on('connection', (socket: any) => {
-    socket.id = Math.random()
-    socket.words = []
-    socket.ready = false;
-    SOCKET_LIST[socket.id] = socket
+    addWord(word: string) {
+        this.words.push(word)
+    }
 
-    console.log('socket connection %s', socket.id)
-    console.log('sockets: %s', SOCKET_LIST)
+    addScore(score: number) {
+        this.score += score;
+    }
+}
 
-    socket.on('disconnect', () => {
-        console.log('socket disconnection')
-        delete SOCKET_LIST[socket.id]
-    })
+class Room {
+    id: string;
+    name: string;
+    owner: Player;
+    players: { [key: string]: Player } = {};
+    leaderboard: { [key: string]: number } = {};
+    board: { [key: number]: string[] } = {};
+    all_ready: boolean = false;
 
-    socket.on('signal_start', (size: any) => {
-        leaderboard = {}
-        for (let i in SOCKET_LIST) {
-            let socket = SOCKET_LIST[i]
-            socket.emit('enter_lobby')
-        }
+    constructor(id: string, name: string, owner: Player) {
+        this.id = id;
+        this.name = name;
+        this.owner = owner;
+        this.join(owner);
+        console.log('created room %s', this.id)
+    }
+
+    public generateBoard(size: number) {
         for (let i = 0; i < size; i++) {
-            board[i] = []
+            this.board[i] = []
             for (let j = 0; j < size; j++) {
-                board[i].push(String.fromCharCode(65 + Math.floor(Math.random() * 26)))
+                this.board[i].push(String.fromCharCode(65 + Math.floor(Math.random() * 26)))
             }
         }
-        console.log(board)
-    })
+        console.log('generated board for room %s', this.id)
+    }
 
-    socket.on('submit_score', (data: any) => {
-        leaderboard[data.id] = data.score;
-    })
+    public join(player: Player) {
+        if (Object.keys(this.players).includes(player.id)) return;
+        this.players[player.id] = player;
+        player.roomId = this.id;
+        console.log('player %s joined room %s', player.id, this.id)
+    }
 
-    socket.on('end', () => {
-        for (let i in SOCKET_LIST) {
-            let socket = SOCKET_LIST[i]
-            socket.emit('final_scores', leaderboard)
+    public leave(player: Player) {
+        if (!Object.keys(this.players).includes(player.id)) return;
+
+        console.log('player %s left room %s', player.id, this.id)
+        delete this.players[player.id];
+
+        if (Object.keys(this.players).length === 0) {
+            console.log('room %s is empty, deleting', this.id)
+            delete room_list[this.id];
         }
+    }
+
+    private checkReady() {
+        for (let i in this.players) {
+            let player = this.players[i]
+            if (!player.isReady) {
+                return false;
+            }
+        }
+        return true;
+    }
+}
+
+// player list for tracking sockets
+// key is the socket id, value is the player object
+let player_list: { [key: string]: any } = {};
+
+// 
+let room_list: { [key: string]: Room } = {};
+
+io.sockets.on('connection', (socket: any) => {
+    socket.id = uuid.generate();
+    let new_player = new Player(socket);
+    player_list[socket.id] = new_player;
+
+    console.log('\nplayer connection %s', socket.id)
+    console.log('players: %s', player_list)
+
+    socket.on('disconnect', () => {
+        console.log('socket disconnection %s', socket.id)
+        delete player_list[socket.id]
     })
 
-    socket.on('signal_ready', (id: number) => {
-        socket.ready = true;
-        console.log(id + ' is ready')
-        all_ready = check_ready()
+    socket.on('create_room', (data: any) => {
+        let owner = player_list[data.socketId];
+        let room = new Room(uuid.generate(), data.roomName, owner);
+        room_list[room.id] = room;
+        socket.to(data.socketId).emit('room_created', room.id)
+    })
+
+    socket.on('join_room', (data: any) => {
+        let room = room_list[data.roomId];
+        room.join(player_list[data.socketId]);
+        socket.to(data.socketId).emit('room_joined', room.id)
+    })
+
+    socket.on('leave_room', (data: any) => {
+        let room = room_list[data.roomId];
+        room.leave(player_list[data.socketId]);
+        socket.to(data.socketId).emit('room_left', room.id)
+    })
+
+    socket.on('request_login', (data: any) => {
+        console.log('login request: ' + data.username + ' ' + data.password)
     })
 
     socket.on('word', (data: any) => {
@@ -115,38 +237,13 @@ io.sockets.on('connection', (socket: any) => {
     })
 })
 
-function check_ready() {
-    for (let i in SOCKET_LIST) {
-        let socket = SOCKET_LIST[i]
-        if (!socket.ready) {
-            return false;
-        }
-    }
-    return true;
-}
-
 setInterval(() => {
-    let pack: number[] = [];
-    for (let i in SOCKET_LIST) {
-        pack.push(SOCKET_LIST[i].id)
+    let pack: string[] = [];
+    for (let i in player_list) {
+        pack.push(player_list[i].id)
     }
-    for (let i in SOCKET_LIST) {
-        let socket = SOCKET_LIST[i]
-        socket.emit('socket_info', pack)
+    for (let i in player_list) {
+        let target = player_list[i].socket
+        target.emit('socket_info', pack)
     }
 }, 1000/30)
-
-setInterval(() => {
-    if (all_ready) {
-        for (let i in SOCKET_LIST) {
-            let socket = SOCKET_LIST[i]
-            socket.emit('game_start')
-            socket.emit('board', board)
-            socket.ready = false;
-        }
-        all_ready = false;
-    }
-}, 1000)
-
-
-
