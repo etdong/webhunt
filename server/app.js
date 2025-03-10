@@ -276,6 +276,7 @@ io.sockets.on('connection', (socket) => {
         player.name = name;
         player.googleId = googleId;
         console.log('login: %s; %s', player.name, player.googleId);
+        socket.emit('logged_in');
     });
     socket.on('check_login', (socketId, callback) => {
         let player = player_list[socketId];

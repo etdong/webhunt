@@ -298,6 +298,7 @@ io.sockets.on('connection', (socket: any) => {
         player.name = name;
         player.googleId = googleId;
         console.log('login: %s; %s', player.name, player.googleId)
+        socket.emit('logged_in');
     })
 
     socket.on('check_login', (socketId: string, callback: any) => {
