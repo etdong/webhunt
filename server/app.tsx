@@ -491,10 +491,12 @@ io.sockets.on('connection', (socket: any) => {
         .then(res => res.json())
         .then(data => {
             if (data) {
+                console.log(data.id)
                 client.connect().then(() => {
                     const db = client.db('webhunt-users');
                     const collection = db.collection('users');
                     collection.findOne({ googleId: data.id }).then((user) => {
+                        console.log(user)
                         callback({ status: 'ok', user: user });
                     });
                 })
