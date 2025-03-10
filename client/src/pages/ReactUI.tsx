@@ -11,8 +11,11 @@ export default function ReactUI() {
 	const [user, setUser] = useState({ loggedIn: false, displayName: "", id: ""});
 
 	useEffect(() => {
-		fetch("https://webhunt.onrender.com/account", { credentials: 'include' })
-			.then(res => res.json())
+		fetch("https://webhunt.onrender.com/account", { 
+			method: 'GET',
+			mode: 'cors',
+			credentials: 'include',
+		}).then(res => res.json())
 			.then(data => {
 				setUser(data);
 			});
@@ -28,7 +31,7 @@ export default function ReactUI() {
 		if (server_loggedOut) {
 			return (
 				<div id='menu'>
-					<Link style={{ textDecoration: 'none', color: "black",}} id="menu_login" to='/login'>Login</Link>
+					<Link className="server_logout" style={{ textDecoration: 'none', color: "black",}} id="menu_login" to='/login'>Login</Link>
 				</div>
 			)
 		}
