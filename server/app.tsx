@@ -5,7 +5,7 @@ import express from 'express';
 import http from 'http'
 import { Server } from 'socket.io'
 import passport from 'passport';
-import session from 'express-session';
+import session from 'cookie-session';
 import { MongoClient, ServerApiVersion } from 'mongodb';
 
 function generateRandomString(length: number) {
