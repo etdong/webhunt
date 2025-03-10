@@ -67,6 +67,8 @@ export default function init_stats(k: KAPLAYCtx) {
                 stats[4].text = user.avg_score_per_game.toFixed(2);
                 stats[5].text = user.words_found;
                 stats[6].text = user.avg_score_per_word.toFixed(2);
+            } else {
+                console.log(response.message);
             }
         })
 
