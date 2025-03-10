@@ -198,15 +198,7 @@ app.use((0, cors_1.default)({
     credentials: true, //access-control-allow-credentials:true
     optionsSuccessStatus: 200
 }));
-app.use((0, express_session_1.default)({
-    secret: uuid.generate(),
-    resave: false,
-    saveUninitialized: true,
-    cookie: {
-        maxAge: 1000 * 60 * 60 * 24,
-        secure: true,
-    }
-}));
+app.use((0, express_session_1.default)({ secret: "secret" }));
 app.use(passport_1.default.initialize());
 app.use(passport_1.default.session());
 app.use(passport_1.default.authenticate('session'));
