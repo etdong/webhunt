@@ -198,17 +198,18 @@ app.use((0, cors_1.default)({
     credentials: true, //access-control-allow-credentials:true
     optionsSuccessStatus: 200
 }));
-app.use((0, cookie_session_1.default)({ secret: 'test' }));
+app.use((0, cookie_session_1.default)({ secret: process.env.GOOGLE_CLIENT_SECRET }));
 app.use(passport_1.default.initialize());
 app.use(passport_1.default.session());
 app.get("/", (_, res) => {
-    res.send("Hello World!");
+    res.send("Webhunt backend server");
 });
 app.get("/auth/google", passport_1.default.authenticate('google', {
     scope: ['profile']
 }));
 app.get("/google/callback", passport_1.default.authenticate('google', { session: true }), (_, res) => {
-    res.redirect(client_url || 'https://webhunt-client.onrender.com');
+    res.send(client_url);
+    res.redirect(client_url || 'https://webhunt.donger.ca');
 });
 function isAuthenticated(req, res, next) {
     if (req.user)

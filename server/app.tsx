@@ -190,12 +190,12 @@ app.use(cors({
     credentials: true,            //access-control-allow-credentials:true
     optionsSuccessStatus: 200
 }));
-app.use(session({ secret: 'test' }))
+app.use(session({ secret: process.env.GOOGLE_CLIENT_SECRET }))
 app.use(passport.initialize());
 app.use(passport.session());
 
 app.get("/", (_, res) => {
-    res.send("Hello World!");
+    res.send("Webhunt backend server");
 })
 
 app.get(
@@ -209,7 +209,8 @@ app.get(
     "/google/callback", 
     passport.authenticate('google', { session: true }),
     (_, res) => {
-        res.redirect(client_url || 'https://webhunt-client.onrender.com');
+        res.send(client_url)
+        res.redirect(client_url || 'https://webhunt.donger.ca');
     }   
 );
 
