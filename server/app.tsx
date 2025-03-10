@@ -210,13 +210,16 @@ app.get(
 app.get(
     "/google/callback", 
     passport.authenticate('google', { session: true }),
-    (_, res) => {
+    (req, res) => {
+        console.log(req.user);
+        console.log(req.body.user);
+        console.dir('Req body: ' + JSON.stringify(req.body));
+        console.log('\n\nReq session: ' + JSON.stringify(req.session));
         res.redirect(client_url || 'https://webhunt.donger.ca');
     }   
 );
 
 function isAuthenticated(req: any, res: any, next: any) {
-    console.log(req);
     if (req.user) next();
     else res.json({ loggedIn: false});
 }
