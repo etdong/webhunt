@@ -441,29 +441,22 @@ io.sockets.on('connection', (socket) => {
             }
         }
     });
-    socket.on('request_stats', (callback) => {
-        fetch("https://webhunt.onrender.com/account", {
-            method: 'GET',
-            mode: 'cors',
-            credentials: 'include',
-        })
-            .then(res => res.json())
-            .then(data => {
-            if (data) {
-                console.log(data);
-                console.log(data.id);
-                client.connect().then(() => {
-                    const db = client.db('webhunt-users');
-                    const collection = db.collection('users');
-                    collection.findOne({ googleId: data.id }).then((user) => {
-                        console.log(user);
-                        callback({ status: 'ok', user: user });
-                    });
-                });
-            }
-            else {
-                callback({ status: 'error', message: 'fetch failed' });
-            }
+    socket.on('request_stats', (socketId, callback) => {
+        let player = player_list[socketId];
+        if (player === undefined) {
+            callback({ status: 'error', message: 'player not found' });
+            return;
+        }
+        if (player.googleId === "") {
+            callback({ status: 'error', message: 'player not found in db' });
+            return;
+        }
+        client.connect().then(() => {
+            const db = client.db('webhunt-users');
+            const collection = db.collection('users');
+            collection.findOne({ googleId: player.googleId }).then((user) => {
+                callback({ status: 'ok', user: user });
+            });
         });
     });
 });
