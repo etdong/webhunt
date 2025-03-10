@@ -490,6 +490,10 @@ setInterval(() => {
 
     for (let i in room_list) {
         let room = room_list[i];
+        if (Object.keys(room.players).length === 0) {
+            delete room_list[i];
+            continue;
+        }
         let data = {
             id: room.id,
             name: room.name,
@@ -509,4 +513,4 @@ setInterval(() => {
                 player.socket.emit('room_info', data, false)
         }
     }
-}, 1000/30)
+}, 100)
