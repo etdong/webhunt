@@ -303,9 +303,22 @@ io.sockets.on('connection', (socket: any) => {
 
     socket.on('check_login', (socketId: string, callback: any) => {
         let player = player_list[socketId];
-        if (player === undefined) callback({status: false, message: 'player not found'});
-        else if (player.googleId === "") callback({status: false, message: 'google id not found'});
-        else callback({status: true, message: 'logged in'});
+        if (player === undefined) {
+            callback({status: false, message: 'player not found'});
+            return;
+        }
+        socket.emit('request_login', (response: any) => {
+            if (response.status === 'ok') {
+                let user = response.user;
+                player.name = user.displayName;
+                player.googleId = user.googleId;
+                callback({ status: true, message: 'logged in' });
+                return;
+            } else {
+                callback({ status: false, message: 'not logged in' });
+                return;
+            }
+        })
     })
 
 
