@@ -194,7 +194,7 @@ function store_player(player, win) {
 const app = (0, express_1.default)();
 require('./auth');
 app.use((0, cors_1.default)({
-    origin: client_url,
+    origin: "https://webhunt.donger.ca",
     credentials: true, //access-control-allow-credentials:true
     optionsSuccessStatus: 200
 }));
@@ -223,7 +223,7 @@ app.get("/account", isAuthenticated, (req, res) => {
 const serv = http_1.default.createServer(app);
 const io = new socket_io_1.Server(serv, {
     cors: {
-        origin: client_url,
+        origin: "https://webhunt.donger.ca",
         methods: ["GET", "POST"],
     },
 });
