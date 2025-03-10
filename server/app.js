@@ -44,10 +44,10 @@ const http_1 = __importDefault(require("http"));
 const socket_io_1 = require("socket.io");
 const passport_1 = __importDefault(require("passport"));
 const express_session_1 = __importDefault(require("express-session"));
-const db_js_1 = __importStar(require("./db.js"));
-const room_js_1 = __importDefault(require("./models/room.js"));
-const player_js_1 = __importDefault(require("./models/player.js"));
-const helpers_js_1 = require("./utils/helpers.js");
+const db_js_1 = __importStar(require("/opt/render/project/src/server/db.js"));
+const room_js_1 = __importDefault(require("/opt/render/project/src/server/models/room.js"));
+const player_js_1 = __importDefault(require("/opt/render/project/src/server/models/player.js"));
+const helpers_js_1 = require("/opt/render/project/src/server/utils/helpers.js");
 const client_url = process.env.CLIENT_URL;
 const uuid = (0, short_uuid_1.default)();
 // reading in the wordlist
