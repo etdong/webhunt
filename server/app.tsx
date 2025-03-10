@@ -194,6 +194,9 @@ app.use(cors({
 }));
 
 app.set('trust proxy', 1)
+
+const MemoryStore = require('memorystore')(session);
+
 app.use(session({ 
     secret: "secret",
     resave: false,
@@ -204,6 +207,9 @@ app.use(session({
         maxAge: 1000 * 60 * 60 * 24
     },
     proxy: true,
+    store: new MemoryStore({
+        checkPeriod: 86400000 // prune expired entries every 24h
+    })
 }))
 app.use(passport.initialize());
 app.use(passport.session());

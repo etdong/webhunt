@@ -199,6 +199,7 @@ app.use((0, cors_1.default)({
     credentials: true, //access-control-allow-credentials:true
 }));
 app.set('trust proxy', 1);
+const MemoryStore = require('memorystore')(express_session_1.default);
 app.use((0, express_session_1.default)({
     secret: "secret",
     resave: false,
@@ -209,6 +210,9 @@ app.use((0, express_session_1.default)({
         maxAge: 1000 * 60 * 60 * 24
     },
     proxy: true,
+    store: new MemoryStore({
+        checkPeriod: 86400000 // prune expired entries every 24h
+    })
 }));
 app.use(passport_1.default.initialize());
 app.use(passport_1.default.session());
