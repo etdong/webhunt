@@ -21,7 +21,7 @@ const GoogleStrategy = require('passport-google-oauth20').Strategy;
 passport_1.default.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: "http://localhost:2001/google/callback"
+    callbackURL: "https://webhunt.onrender.com/google/callback"
 }, (accessToken, refreshToken, profile, cb) => {
     client.connect().then(() => {
         const db = client.db('webhunt-users');
