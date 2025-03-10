@@ -196,9 +196,12 @@ require('./auth');
 app.use((0, cors_1.default)({
     origin: "https://webhunt.donger.ca",
     credentials: true, //access-control-allow-credentials:true
-    optionsSuccessStatus: 200
 }));
-app.use((0, cookie_session_1.default)({ secret: "secret" }));
+app.use((0, cookie_session_1.default)({
+    secret: "secret",
+    secure: false,
+    sameSite: 'none',
+}));
 app.use(passport_1.default.initialize());
 app.use(passport_1.default.session());
 app.use(passport_1.default.authenticate('session'));
@@ -227,6 +230,7 @@ const serv = http_1.default.createServer(app);
 const io = new socket_io_1.Server(serv, {
     cors: {
         origin: "https://webhunt.donger.ca",
+        credentials: true,
         methods: ["GET", "POST"],
     },
 });

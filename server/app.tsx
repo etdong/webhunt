@@ -188,10 +188,13 @@ require('./auth');
 app.use(cors({
     origin: "https://webhunt.donger.ca",
     credentials: true,            //access-control-allow-credentials:true
-    optionsSuccessStatus: 200
 }));
 
-app.use(session({ secret: "secret" }))
+app.use(session({ 
+    secret: "secret",
+    secure: false,
+    sameSite: 'none',
+}))
 app.use(passport.initialize());
 app.use(passport.session());
 
@@ -239,6 +242,7 @@ const serv = http.createServer(app)
 const io = new Server(serv, {
     cors: {
         origin: "https://webhunt.donger.ca",
+        credentials: true,
         methods: ["GET", "POST"],
     },
 })
