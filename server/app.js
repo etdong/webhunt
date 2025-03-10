@@ -199,7 +199,7 @@ app.use((0, cors_1.default)({
 }));
 app.use((0, cookie_session_1.default)({
     secret: "secret",
-    secure: false,
+    secure: true,
     sameSite: 'none',
 }));
 app.use(passport_1.default.initialize());

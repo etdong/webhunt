@@ -192,7 +192,7 @@ app.use(cors({
 
 app.use(session({ 
     secret: "secret",
-    secure: false,
+    secure: true,
     sameSite: 'none',
 }))
 app.use(passport.initialize());
