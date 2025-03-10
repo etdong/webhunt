@@ -13,9 +13,6 @@ export default function init_menu(k: KAPLAYCtx) {
         let loggedIn = false;
 
         socket.on('logged_in', () => loggedIn = true);
-        socket.emit('check_login', socket.id, (response: any) => {
-            loggedIn = response;
-        })
 
         // draw components
         let background = k.add([
@@ -173,6 +170,12 @@ export default function init_menu(k: KAPLAYCtx) {
                     letters[i].pos = k.center().sub(k.rand(-100, 100), 300 + k.rand(-100, 100));
                 }
             }
+        })
+
+        k.loop(1, () => {
+            socket.emit('check_login', socket.id, (response: any) => {
+                loggedIn = response;
+            })
         })
     });
 }
