@@ -1,4 +1,4 @@
-import Player from "./player.js";
+import Player from "./player";
 
 export default class Room {
     id: string;

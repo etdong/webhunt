@@ -44,10 +44,10 @@ const http_1 = __importDefault(require("http"));
 const socket_io_1 = require("socket.io");
 const passport_1 = __importDefault(require("passport"));
 const express_session_1 = __importDefault(require("express-session"));
-const db_js_1 = __importStar(require("/opt/render/project/src/server/db.js"));
-const room_js_1 = __importDefault(require("/opt/render/project/src/server/models/room.js"));
-const player_js_1 = __importDefault(require("/opt/render/project/src/server/models/player.js"));
-const helpers_js_1 = require("/opt/render/project/src/server/utils/helpers.js");
+const db_1 = __importStar(require("./db"));
+const room_1 = __importDefault(require("./models/room"));
+const player_1 = __importDefault(require("./models/player"));
+const helpers_1 = require("./utils/helpers");
 const client_url = process.env.CLIENT_URL;
 const uuid = (0, short_uuid_1.default)();
 // reading in the wordlist
@@ -98,7 +98,7 @@ let player_list = {};
 // 
 let room_list = {};
 io.sockets.on('connection', (socket) => {
-    let new_player = new player_js_1.default(socket);
+    let new_player = new player_1.default(socket);
     player_list[socket.id] = new_player;
     console.log('\nplayer connection %s', socket.id);
     console.log('players: %s', player_list);
@@ -141,11 +141,11 @@ io.sockets.on('connection', (socket) => {
         }
         ;
         owner.isReady = true;
-        let id = (0, helpers_js_1.generateRandomString)(4);
+        let id = (0, helpers_1.generateRandomString)(4);
         while (room_list[id] !== undefined) {
-            id = (0, helpers_js_1.generateRandomString)(4);
+            id = (0, helpers_1.generateRandomString)(4);
         }
-        let room = new room_js_1.default(id, owner, room_info.name, room_info.max_players, room_info.round_time, room_info.board_size);
+        let room = new room_1.default(id, owner, room_info.name, room_info.max_players, room_info.round_time, room_info.board_size);
         room_list[room.id] = room;
         owner.socket.join(room.id);
         callback({ status: 'ok', room_id: room.id });
@@ -244,7 +244,7 @@ io.sockets.on('connection', (socket) => {
                 let player = room.players[i];
                 if (Object.keys(room.players).length !== 1) {
                     let win = player.score === final_scores[0][1];
-                    (0, db_js_1.store_player)(player, win);
+                    (0, db_1.store_player)(player, win);
                 }
                 player.socket.emit('update_scores', final_scores);
             }
@@ -295,8 +295,8 @@ io.sockets.on('connection', (socket) => {
             callback({ status: 'error', message: 'player not found in db' });
             return;
         }
-        db_js_1.default.connect().then(() => {
-            const db = db_js_1.default.db('webhunt-users');
+        db_1.default.connect().then(() => {
+            const db = db_1.default.db('webhunt-users');
             const collection = db.collection('users');
             collection.findOne({ googleId: player.googleId }).then((user) => {
                 callback({ status: 'ok', user: user });
