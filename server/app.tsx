@@ -479,15 +479,6 @@ io.sockets.on('connection', (socket: any) => {
 })
 
 setInterval(() => {
-    let pack: string[] = [];
-    for (let i in player_list) {
-        pack.push(player_list[i].socket.id)
-    }
-    for (let i in player_list) {
-        let target = player_list[i].socket
-        target.emit('socket_info', pack)
-    }
-
     for (let i in room_list) {
         let room = room_list[i];
         if (Object.keys(room.players).length === 0) {
@@ -513,4 +504,4 @@ setInterval(() => {
                 player.socket.emit('room_info', data, false)
         }
     }
-}, 100)
+}, 1000/10)
