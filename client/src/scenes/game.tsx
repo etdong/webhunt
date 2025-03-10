@@ -84,9 +84,10 @@ export default function init_game(k: KAPLAYCtx) {
                         k.vec2(-100, 128),
                         k.vec2(100, 128),
         
-                    ], {fill: false}),
+                    ]),
                     k.outline(6),
                     k.scale(0.5),
+                    k.color(k.rgb(255, 224, 170)),
                     k.area({shape: new k.Polygon([
                         k.vec2(128, -32),
                         k.vec2(128, 32),
@@ -106,12 +107,17 @@ export default function init_game(k: KAPLAYCtx) {
                     k.pos(letterPos),
                     k.anchor('center'),
                     k.color(0, 0, 0),
-                    k.z(-1),
+                    k.z(1),
                 ])
             }   
         }
         k.onDraw(() => {
-            k.drawLines({ pts: points, width: 10, color: k.rgb(255, 0, 0), cap: 'round' });
+            k.drawLines({ 
+                pts: points, 
+                width: 10, 
+                color: k.rgb(255, 0, 0),
+                opacity: 0.5,
+                cap: 'round' });
         })
 
 

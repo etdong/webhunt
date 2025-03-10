@@ -19,12 +19,13 @@ export function draw_with_tiles(k: KAPLAYCtx, title: string) {
                 k.vec2(-100, 128),
                 k.vec2(100, 128),
 
-            ], {fill: false}),
+            ], {fill: true}),
             k.outline(6),
             k.area(),
             k.body(),
             k.pos(k.width() / 2 - title.length/2 * 128 + i * 164, k.center().y - 256),
             k.scale(0.5),
+            k.color(k.rgb(255, 224, 170)),
             k.offscreen({
                 hide: true,
                 distance: 64,
