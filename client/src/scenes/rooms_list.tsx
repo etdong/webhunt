@@ -133,6 +133,12 @@ export default function init_rooms_list(k: KAPLAYCtx) {
                 for (let i = 0; i < room_objs.length; i++) {
                     room_objs[i].destroy();
                 }
+                for (let i = 0; i < rooms.length; i++) {
+                    let room = rooms[i];
+                    if (room.cur_players === room.max_players) {
+                        delete rooms[i];
+                    }
+                }
                 if (rooms.length === 0) {
                     error.text = 'No rooms available';
                     refresh.color = k.rgb(255, 0, 0);
@@ -141,21 +147,19 @@ export default function init_rooms_list(k: KAPLAYCtx) {
                     error.text = '';
                     for (let i = 0; i < rooms.length; i++) {
                         let room = rooms[i];
-                        if (!(room.cur_players === room.max_players)) {
-                            let room_obj = k.add([
-                                k.text(room.name + ' (' + room.cur_players + '/' + room.max_players + ')', { size: 48, font: 'gaegu' }),
-                                k.anchor('center'),
-                                k.pos(rooms_container.pos.x, rooms_container.pos.y - 224 + i * 64),
-                                k.area(),
-                                k.scale(1),
-                                k.color(k.rgb(0, 0, 0)),
-                                'room',
-                                {
-                                    room_id: room.room_id,
-                                }
-                            ])
-                            room_objs.push(room_obj);
-                        }
+                        let room_obj = k.add([
+                            k.text(room.name + ' (' + room.cur_players + '/' + room.max_players + ')', { size: 48, font: 'gaegu' }),
+                            k.anchor('center'),
+                            k.pos(rooms_container.pos.x, rooms_container.pos.y - 224 + i * 64),
+                            k.area(),
+                            k.scale(1),
+                            k.color(k.rgb(0, 0, 0)),
+                            'room',
+                            {
+                                room_id: room.room_id,
+                            }
+                        ])
+                        room_objs.push(room_obj);
                     }
                 } 
             });
