@@ -1,105 +1,70 @@
-import { GameObj, KAPLAYCtx } from "kaplay";
-import debug_Players from "../utils/debug";
+import { KAPLAYCtx } from "kaplay";
 import { getRelativeMousePos, updateCamPos, updateCamZoom } from "../utils/camUtils";
 
+import socket from "src/components/socket";
+import { draw_with_tiles } from "src/utils/drawUtils";
+
 export default function init_menu(k: KAPLAYCtx) {
-    k.scene('menu', (data) => {
+    k.scene('menu', () => {
 
         // declarations
-        let socket = data.socket;
         let title = 'WEBHUNT';
         let clicked: any = null;
-        let letters: GameObj[] = [];
+        let loggedIn = false;
+
+        socket.on('logged_in', () => loggedIn = true);
+        socket.emit('check_login', socket.id, (response: any) => {
+            loggedIn = response;
+        })
 
         // draw components
-        debug_Players(k, socket);
-
-        let start_button = k.add([
-            k.text('start', { size: 64, font: 'gaegu' }),
-            k.pos(k.center()),
-            k.color(0, 0, 0),
-            k.anchor('center'),
+        let background = k.add([
+            k.rect(k.width(), k.height()),
             k.area(),
-            k.scale(1),
-            'start_button'
+            k.anchor('center'),
+            k.pos(k.center()),
         ])
 
-        for (let i = 0; i < title.length; i++) {
-            let letter = k.add([
+        let menu_labels = ['rooms list', 'create a room', 'join by code', 'stats'];
+        let menu_buttons: any[] = [];
+
+        for (let i = 0; i < menu_labels.length; i++) {
+            let button = k.add([
+                k.text(menu_labels[i], { size: 64, font: 'gaegu' }),
+                k.pos(k.width() / 2, k.height() / 2 + i * 128),
                 k.anchor('center'),
-                k.sprite(title.charAt(i)),
-                k.area({ shape: new k.Polygon([
-                    k.vec2(118, 118),
-                    k.vec2(128, 100),
-                    k.vec2(128, -100),
-                    k.vec2(118, -118),
-                    k.vec2(100, -128),
-                    k.vec2(-100, -128),
-                    k.vec2(-118, -118),
-                    k.vec2(-128, -100),
-                    k.vec2(-128, 100),
-                    k.vec2(-118, 118),
-                    k.vec2(-100, 128),
-                ])}),
-                k.body(),
-                k.pos(k.width() / 2 - title.length/2 * 128 + i * 164, k.center().y - 256),
-                k.scale(0.5),
-                k.offscreen({
-                    hide: true,
-                    distance: 64,
-                }),
-                'letter',
-                title.charAt(i),
+                k.area(),
+                k.color(0, 0, 0),
+                k.scale(1),
+                'menu_button',
+                'button_' + i,
             ]);
-
-            letters.push(letter);
-
-            // need to set the most recent clicked, otherwise you can
-            // accidentally hover another letter and switch targets
-            // eslint-disable-next-line no-loop-func
-            letter.onClick(() => {
-                clicked = letter;
-            })
+            menu_buttons.push(button);
         }
 
 
-        // socket handling
-        // when a client returns to the menu from game, the game will emit an 'end' event
-        if (data.state === 'end') {
-            socket.emit('end');
-        }
+        let letters = draw_with_tiles(k, title);
+        
 
-        // received start from server
-        socket.on('enter_lobby', () => {
-            k.go('game', { socket: socket });
-        })
-
-        // 'final_scores' gets emitted after 'end' is received by the server
-        socket.on('final_scores', (data: any) => {
-            let j = 0
-            for (let i in data) {
-                k.add([
-                    k.text(data[i], { size: 32 }),
-                    k.pos(0, 35 + 80 * j),
-                    k.color(255, 0, 255),
-                ]);
-                j += 1;
+        // event handlers
+        k.onClick('', (object) => {
+            if (object.tags.includes('letter')) {
+                clicked = object;
+            } else {
+                clicked = null;
             }
         })
-        
-        
-        // event handlers
-        start_button.onHover(() => {
-            start_button.scale = k.vec2(1.4);
-        })
 
-        start_button.onHoverEnd(() => {
-            start_button.scale = k.vec2(1);
-        })
-
-        start_button.onClick(() => {
-            k.go('game', { socket: socket });
-            socket.emit('signal_start', 4)
+        k.onClick('menu_button', (btn) => {
+            if (btn.text === 'rooms list') {
+                k.go('rooms_list');
+            } else if (btn.text === 'create a room') {
+                k.go('create_room');
+            } else if (btn.text === 'join by code') {
+                k.go('join_room');
+            } else if (btn.text === 'stats') {
+                k.go('stats');
+            }
         })
 
         k.onHover('letter', (letter) => {
@@ -123,6 +88,26 @@ export default function init_menu(k: KAPLAYCtx) {
             )
         })
 
+        k.onHover('menu_button', (btn) => {
+            k.tween(
+                btn.scale,
+                k.vec2(1.2),
+                0.1,
+                (newScale) => btn.scale = newScale,
+                k.easings.linear
+            )
+        })
+
+        k.onHoverEnd('menu_button', (btn) => {
+            k.tween(
+                btn.scale,
+                k.vec2(1),
+                0.1,
+                (newScale) => btn.scale = newScale,
+                k.easings.linear
+            )
+        })
+
         k.onMouseDown("left", () => {
             if (clicked !== null) {
                 k.tween(
@@ -142,7 +127,6 @@ export default function init_menu(k: KAPLAYCtx) {
             }
         })
 
-
         k.onMouseRelease("left", () => {
             if (clicked !== null) {
                 k.tween(
@@ -155,12 +139,23 @@ export default function init_menu(k: KAPLAYCtx) {
             }
         })
 
+        socket.on('logged_out', () => {
+            loggedIn = false;
+        })
+
         k.onUpdate(() => {
-            updateCamPos(k, start_button.pos);
+            if (!loggedIn) {
+                menu_buttons[3].text = 'log in to see stats'
+                menu_buttons[3].color = k.rgb(128, 128, 128);
+            } else {
+                menu_buttons[3].text = 'stats';
+                menu_buttons[3].color = k.rgb(0, 0, 0);
+            }
+            updateCamPos(k, background.pos);
             updateCamZoom(k);
             for (let i in letters) {
                 if (letters[i].hidden) {
-                    letters[i].pos = k.center().sub(k.rand(-100, 100), k.rand(-100, 100));
+                    letters[i].pos = k.center().sub(k.rand(-100, 100), 300 + k.rand(-100, 100));
                 }
             }
         })

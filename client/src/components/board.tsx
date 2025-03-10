@@ -1,6 +1,6 @@
 import { KAPLAYCtx } from "kaplay";
 
-export default function drawBoard(k: KAPLAYCtx, socket: any, size: number) {
+export default function drawBoard(k: KAPLAYCtx, size: number) {
     let side_length = 128 * size;
 
     let board = k.add([

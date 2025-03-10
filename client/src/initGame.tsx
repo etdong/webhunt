@@ -1,12 +1,18 @@
-import makeKaplayCtx from "./kaplayCtx";
 import init_game from "./scenes/game";
 import init_menu from "./scenes/menu";
+import init_create_room from "./scenes/create_room";
 
-import io from 'socket.io-client';
-const socket = io("https://webhunt.onrender.com:2001");
+import makeKaplayCtx from "./kaplayCtx";
+
+import socket from "src/components/socket";
+import init_room from "./scenes/room";
+import init_join_room from "./scenes/join_room";
+import init_rooms_list from "./scenes/rooms_list";
+import init_scores from "./scenes/scores";
+import init_stats from "./scenes/stats";
 
 export default async function initGame() {
-    const k = makeKaplayCtx();
+	const k = makeKaplayCtx()
 
     k.setLayers(['bg', 'game', 'fg'], 'game')
 
@@ -21,7 +27,12 @@ export default async function initGame() {
     // scenes
     init_menu(k)
     init_game(k)
+    init_room(k)
+    init_rooms_list(k)
+    init_join_room(k)
+    init_create_room(k)
+    init_scores(k)
+    init_stats(k)
 
-    let data = {socket: socket}
-	k.go('menu', data)
+	k.go('menu')
 }
