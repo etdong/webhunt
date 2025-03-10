@@ -1,4 +1,4 @@
-import { generateRandomString } from "../utils/helpers";
+import { generateRandomString } from "../utils/helpers.js";
 
 export default class Player {
     id: string;

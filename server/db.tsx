@@ -1,5 +1,5 @@
 import { MongoClient, ServerApiVersion } from "mongodb";
-import Player from "./models/Player";
+import Player from "./models/player.js";
 
 // setting up mongodb
 const user = process.env.DBUSER;

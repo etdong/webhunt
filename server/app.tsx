@@ -6,10 +6,10 @@ import http from 'http'
 import { Server } from 'socket.io'
 import passport from 'passport';
 import session from 'express-session';
-import Player from './models/Player';
 import client, { store_player } from './db';
-import { generateRandomString } from './utils/helpers';
-import Room from './models/Room';
+import Room from './models/room.js';
+import Player from './models/player.js';
+import { generateRandomString } from './utils/helpers.js';
 
 const client_url = process.env.CLIENT_URL;
 const uuid = short();
