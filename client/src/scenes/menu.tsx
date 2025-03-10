@@ -148,17 +148,7 @@ export default function init_menu(k: KAPLAYCtx) {
             }
         })
 
-        k.loop(5, () => {
-            if (!loggedIn) {
-                socket.emit('check_login', socket.id, (response: any) => {
-                    if (response.status) loggedIn = response;
-                    else console.log('login failed: ' + response.message);
-                })
-            }
-        })
-
         socket.on('logged_in', () => loggedIn = true);
-
 
         k.onUpdate(() => {
             if (!loggedIn) {

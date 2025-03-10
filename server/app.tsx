@@ -297,7 +297,6 @@ io.sockets.on('connection', (socket: any) => {
         if (player === undefined) return;
         player.name = name;
         player.googleId = googleId;
-        console.log('login: %s; %s', player.name, player.googleId)
         player.socket.emit('logged_in');
     })
 

@@ -21,22 +21,11 @@ export default function ReactUI() {
 			});
 	}, [])
 
-	let server_loggedOut = false;
-	socket.on('logged_out', () => {
-		setUser({ loggedIn: false, displayName: "", id: ""});
-		server_loggedOut = true;
-	})
-
 	const menuComponent = () => {
-		if (server_loggedOut) {
-			return (
-				<div id='menu'>
-					<Link className="server_logout" style={{ textDecoration: 'none', color: "black",}} id="menu_login" to='/login'>Login</Link>
-				</div>
-			)
-		}
 		if (user.loggedIn) {
-			socket.emit('login', socket.id, user.displayName, user.id);
+			setInterval(() => {
+				socket.emit('login', socket.id, user.displayName, user.id);
+			}, 5000);
 			return (
 			<div id='menu'>
 				<div>Logged in as {'' + user.displayName}</div>
