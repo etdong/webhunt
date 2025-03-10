@@ -209,7 +209,7 @@ app.get(
     "/google/callback", 
     passport.authenticate('google', { session: true }),
     (_, res) => {
-        res.redirect(client_url || 'http://localhost:3000');
+        res.redirect(client_url || 'https://webhunt-client.onrender.com');
     }   
 );
 

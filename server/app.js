@@ -208,7 +208,7 @@ app.get("/auth/google", passport_1.default.authenticate('google', {
     scope: ['profile']
 }));
 app.get("/google/callback", passport_1.default.authenticate('google', { session: true }), (_, res) => {
-    res.redirect(client_url || 'http://localhost:3000');
+    res.redirect(client_url || 'https://webhunt-client.onrender.com');
 });
 function isAuthenticated(req, res, next) {
     if (req.user)
