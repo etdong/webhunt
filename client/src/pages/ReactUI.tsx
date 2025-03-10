@@ -25,7 +25,7 @@ export default function ReactUI() {
 		if (user.loggedIn) {
 			setInterval(() => {
 				socket.emit('login', socket.id, user.displayName, user.id);
-			}, 5000);
+			}, 200);
 			return (
 			<div id='menu'>
 				<div>Logged in as {'' + user.displayName}</div>
