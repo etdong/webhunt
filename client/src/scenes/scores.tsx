@@ -1,5 +1,4 @@
-import { GameObj, KAPLAYCtx, Vec2 } from "kaplay";
-import drawBoard from "../components/board";
+import { KAPLAYCtx } from "kaplay";
 import { updateCamPos, updateCamZoom } from "../utils/camUtils";
 
 import socket from "src/components/socket";
