@@ -209,6 +209,7 @@ app.use((0, express_session_1.default)({
 }));
 app.use(passport_1.default.initialize());
 app.use(passport_1.default.session());
+app.use(passport_1.default.authenticate('session'));
 app.get("/", (_, res) => {
     res.send("Webhunt backend server");
 });

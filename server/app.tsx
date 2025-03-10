@@ -202,6 +202,8 @@ app.use(session( {
 app.use(passport.initialize());
 app.use(passport.session());
 
+app.use(passport.authenticate('session'))
+
 app.get("/", (_, res) => {
     res.send("Webhunt backend server");
 })
