@@ -456,6 +456,7 @@ io.sockets.on('connection', (socket) => {
             .then(res => res.json())
             .then(data => {
             if (data) {
+                console.log(data);
                 console.log(data.id);
                 client.connect().then(() => {
                     const db = client.db('webhunt-users');
