@@ -190,6 +190,7 @@ app.use(cors({
     credentials: true,            //access-control-allow-credentials:true
     optionsSuccessStatus: 200
 }));
+
 app.use(session({ secret: "secret" }))
 app.use(passport.initialize());
 app.use(passport.session());
@@ -209,14 +210,11 @@ app.get(
 
 app.get(
     "/google/callback", 
-    passport.authenticate('google', { session: true }),
-    (req, res) => {
-        console.log(req.user);
-        console.log(req.body.user);
-        console.dir('Req body: ' + JSON.stringify(req.body));
-        console.log('\n\nReq session: ' + JSON.stringify(req.session));
-        res.redirect(client_url || 'https://webhunt.donger.ca');
-    }   
+    passport.authenticate('google', { 
+        session: true,
+        successRedirect: client_url || 'https://webhunt.donger.ca',
+        failureRedirect: client_url || 'https://webhunt.donger.ca'
+    })
 );
 
 function isAuthenticated(req: any, res: any, next: any) {

@@ -208,13 +208,11 @@ app.get("/", (_, res) => {
 app.get("/auth/google", passport_1.default.authenticate('google', {
     scope: ['profile']
 }));
-app.get("/google/callback", passport_1.default.authenticate('google', { session: true }), (req, res) => {
-    console.log(req.user);
-    console.log(req.body.user);
-    console.dir('Req body: ' + JSON.stringify(req.body));
-    console.log('\n\nReq session: ' + JSON.stringify(req.session));
-    res.redirect(client_url || 'https://webhunt.donger.ca');
-});
+app.get("/google/callback", passport_1.default.authenticate('google', {
+    session: true,
+    successRedirect: client_url || 'https://webhunt.donger.ca',
+    failureRedirect: client_url || 'https://webhunt.donger.ca'
+}));
 function isAuthenticated(req, res, next) {
     if (req.user)
         next();
