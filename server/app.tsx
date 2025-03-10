@@ -294,12 +294,6 @@ io.sockets.on('connection', (socket: any) => {
 
     socket.on('login', (socketId: string, name: string, googleId: string) => {
         console.log('login: ', name)
-        for (let i in player_list) {
-            if (player_list[i].googleId === googleId) {
-                player_list[i].socket.emit('logged_out');
-                player_list[i].googleId = "";
-            }
-        }
         let player = player_list[socketId];
         if (player === undefined) return;
         player.name = name;
@@ -308,7 +302,7 @@ io.sockets.on('connection', (socket: any) => {
 
     socket.on('check_login', (socketId: string, callback: any) => {
         let player = player_list[socketId];
-        if (player === undefined)callback({status: false, message: 'player not found'});
+        if (player === undefined) callback({status: false, message: 'player not found'});
         else if (player.googleId === "") callback({status: false, message: 'google id not found'});
         else callback({status: true, message: 'logged in'});
     })

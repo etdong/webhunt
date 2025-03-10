@@ -271,12 +271,6 @@ io.sockets.on('connection', (socket) => {
     });
     socket.on('login', (socketId, name, googleId) => {
         console.log('login: ', name);
-        for (let i in player_list) {
-            if (player_list[i].googleId === googleId) {
-                player_list[i].socket.emit('logged_out');
-                player_list[i].googleId = "";
-            }
-        }
         let player = player_list[socketId];
         if (player === undefined)
             return;
