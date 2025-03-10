@@ -199,8 +199,8 @@ app.use((0, cors_1.default)({
     optionsSuccessStatus: 200
 }));
 app.use((0, cookie_session_1.default)({
-    maxAge: 24 * 60 * 60,
     secret: process.env.GOOGLE_CLIENT_SECRET,
+    maxAge: 24 * 60 * 60,
     secure: true,
     sameSite: "none",
 }));
@@ -216,6 +216,7 @@ app.get("/google/callback", passport_1.default.authenticate('google', { session:
     res.redirect(client_url || 'https://webhunt.donger.ca');
 });
 function isAuthenticated(req, res, next) {
+    console.log(req);
     if (req.user)
         next();
     else

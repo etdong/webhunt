@@ -191,8 +191,8 @@ app.use(cors({
     optionsSuccessStatus: 200
 }));
 app.use(session({
-    maxAge: 24 * 60 * 60,
     secret: process.env.GOOGLE_CLIENT_SECRET,
+    maxAge: 24 * 60 * 60,
     secure: true,
     sameSite: "none", 
 }))
@@ -219,6 +219,7 @@ app.get(
 );
 
 function isAuthenticated(req: any, res: any, next: any) {
+    console.log(req);
     if (req.user) next();
     else res.json({ loggedIn: false});
 }
