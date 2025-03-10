@@ -293,11 +293,11 @@ io.sockets.on('connection', (socket: any) => {
     })
 
     socket.on('login', (socketId: string, name: string, googleId: string) => {
-        console.log('login: %s; %s', name, googleId)
         let player = player_list[socketId];
         if (player === undefined) return;
         player.name = name;
         player.googleId = googleId;
+        console.log('login: %s; %s', player.name, player.googleId)
     })
 
     socket.on('check_login', (socketId: string, callback: any) => {

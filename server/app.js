@@ -270,12 +270,12 @@ io.sockets.on('connection', (socket) => {
         delete player_list[socket.id];
     });
     socket.on('login', (socketId, name, googleId) => {
-        console.log('login: %s; %s', name, googleId);
         let player = player_list[socketId];
         if (player === undefined)
             return;
         player.name = name;
         player.googleId = googleId;
+        console.log('login: %s; %s', player.name, player.googleId);
     });
     socket.on('check_login', (socketId, callback) => {
         let player = player_list[socketId];
