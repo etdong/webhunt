@@ -293,7 +293,7 @@ io.sockets.on('connection', (socket: any) => {
     })
 
     socket.on('login', (socketId: string, name: string, googleId: string) => {
-        console.log('login: ', name)
+        console.log('login: %s; %s', name, googleId)
         let player = player_list[socketId];
         if (player === undefined) return;
         player.name = name;
