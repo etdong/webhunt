@@ -283,6 +283,9 @@ io.sockets.on('connection', (socket) => {
         while (room_list[id] !== undefined) {
             id = generateRandomString(4);
         }
+        if (room_info.name === "") {
+            room_info.name = id;
+        }
         let room = new Room(id, owner, room_info.name, room_info.max_players, room_info.round_time, room_info.board_size);
         room_list[room.id] = room;
         owner.socket.join(room.id);

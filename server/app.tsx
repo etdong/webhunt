@@ -301,6 +301,11 @@ io.sockets.on('connection', (socket: any) => {
         while (room_list[id] !== undefined) {   
             id = generateRandomString(4);
         }
+
+        if (room_info.name === "") {
+            room_info.name = id;
+        }
+        
         let room = new Room(
             id,
             owner,
