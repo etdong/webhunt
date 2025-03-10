@@ -12,8 +12,6 @@ export default function init_menu(k: KAPLAYCtx) {
         let clicked: any = null;
         let loggedIn = false;
 
-        socket.on('logged_in', () => loggedIn = true);
-
         // draw components
         let background = k.add([
             k.rect(k.width(), k.height()),
@@ -135,10 +133,6 @@ export default function init_menu(k: KAPLAYCtx) {
                 )
             }
         })
-
-        socket.on('logged_out', () => {
-            loggedIn = false;
-        })
         
         k.onDraw(() => {
             for (let i in letters) {
@@ -153,6 +147,18 @@ export default function init_menu(k: KAPLAYCtx) {
                 });
             }
         })
+
+        k.loop(5, () => {
+            if (!loggedIn) {
+                socket.emit('check_login', socket.id, (response: any) => {
+                    if (response.status) loggedIn = response;
+                    else console.log('login failed: ' + response.message);
+                })
+            }
+        })
+
+        socket.on('logged_in', () => loggedIn = true);
+
 
         k.onUpdate(() => {
             if (!loggedIn) {
@@ -172,10 +178,6 @@ export default function init_menu(k: KAPLAYCtx) {
             }
         })
 
-        k.loop(1, () => {
-            socket.emit('check_login', socket.id, (response: any) => {
-                loggedIn = response;
-            })
-        })
+        
     });
 }
