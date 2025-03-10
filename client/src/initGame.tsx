@@ -4,7 +4,6 @@ import init_create_room from "./scenes/create_room";
 
 import makeKaplayCtx from "./kaplayCtx";
 
-import socket from "src/components/socket";
 import init_room from "./scenes/room";
 import init_join_room from "./scenes/join_room";
 import init_rooms_list from "./scenes/rooms_list";
