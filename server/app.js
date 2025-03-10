@@ -282,13 +282,15 @@ io.sockets.on('connection', (socket) => {
             return;
         player.name = name;
         player.googleId = googleId;
-        player.socket.emit('logged_in');
     });
     socket.on('check_login', (socketId, callback) => {
         let player = player_list[socketId];
-        if (player === undefined || player.googleId === "")
-            callback(false);
-        callback(true);
+        if (player === undefined)
+            callback({ status: false, message: 'player not found' });
+        else if (player.googleId === "")
+            callback({ status: false, message: 'google id not found' });
+        else
+            callback({ status: true, message: 'logged in' });
     });
     socket.on('create_room', (socketId, room_info, callback) => {
         let owner = player_list[socketId];
