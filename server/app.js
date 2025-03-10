@@ -99,10 +99,11 @@ class Room {
         return true;
     }
     generateBoard(size) {
+        let letters = "AAAAAAAAABBCCDDDDEEEEEEEEEEEEFFGGGHHIIIIIIIIIJKLLLLMMNNNNNNOOOOOOOOPPQRRRRRRSSSSTTTTTTUUUUVVWWXYYZ";
         for (let i = 0; i < size; i++) {
             this.board[i] = [];
             for (let j = 0; j < size; j++) {
-                this.board[i].push(String.fromCharCode(65 + Math.floor(Math.random() * 26)));
+                this.board[i].push(letters[Math.floor(Math.random() * letters.length)]);
             }
         }
         console.log('generated board for room %s', this.id);
