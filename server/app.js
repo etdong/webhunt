@@ -204,10 +204,6 @@ app.use((0, cookie_session_1.default)({
     secure: true,
     sameSite: "none",
 }));
-app.use((req, res, next) => {
-    req["sessionCookies"].secure = true;
-    next();
-});
 app.use(passport_1.default.initialize());
 app.use(passport_1.default.session());
 app.get("/", (_, res) => {

@@ -196,10 +196,6 @@ app.use(session({
     secure: true,
     sameSite: "none", 
 }))
-app.use((req: any, res, next)=>{
-    req["sessionCookies"].secure = true;
-    next();
-});
 app.use(passport.initialize());
 app.use(passport.session());
 
