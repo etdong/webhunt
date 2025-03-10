@@ -44,14 +44,152 @@ const http_1 = __importDefault(require("http"));
 const socket_io_1 = require("socket.io");
 const passport_1 = __importDefault(require("passport"));
 const express_session_1 = __importDefault(require("express-session"));
-const db_1 = __importStar(require("./db"));
-const room_1 = __importDefault(require("./models/room"));
-const player_1 = __importDefault(require("./models/player"));
-const helpers_1 = require("./utils/helpers");
+const mongodb_1 = require("mongodb");
+function generateRandomString(length) {
+    const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    let result = "";
+    for (let i = 0; i < length; i++) {
+        const randomIndex = Math.floor(Math.random() * charset.length);
+        result += charset[randomIndex];
+    }
+    return result;
+}
+class Player {
+    constructor(socket) {
+        this.words = [];
+        this.score = 0;
+        this.isReady = false;
+        this.roomId = "menu";
+        this.googleId = "";
+        this.id = socket.id;
+        this.socket = socket;
+        this.name = 'Guest_' + generateRandomString(4);
+    }
+    addWord(word) {
+        this.words.push(word);
+    }
+    addScore(score) {
+        this.score += score;
+    }
+    reset() {
+        this.words = [];
+        this.score = 0;
+        this.isReady = false;
+    }
+}
+class Room {
+    constructor(id, owner, name, max_players, round_time, board_size) {
+        this.players = {};
+        this.board = {};
+        this.all_ready = false;
+        this.id = id;
+        this.owner = owner;
+        this.join(owner);
+        this.name = name;
+        this.max_players = max_players;
+        this.round_time = round_time;
+        this.board_size = board_size;
+        console.log('created room %s', this.id);
+    }
+    startGame() {
+        if (!this.checkReady())
+            return false;
+        this.generateBoard(this.board_size);
+        console.log('game started for room %s', this.id);
+        return true;
+    }
+    generateBoard(size) {
+        for (let i = 0; i < size; i++) {
+            this.board[i] = [];
+            for (let j = 0; j < size; j++) {
+                this.board[i].push(String.fromCharCode(65 + Math.floor(Math.random() * 26)));
+            }
+        }
+        console.log('generated board for room %s', this.id);
+    }
+    join(player) {
+        if (Object.keys(this.players).includes(player.id))
+            return;
+        this.players[player.id] = player;
+        player.roomId = this.id;
+        console.log('player %s joined room %s', player.id, this.id);
+    }
+    leave(player) {
+        if (!Object.keys(this.players).includes(player.id))
+            return;
+        console.log('player %s left room %s', player.id, this.id);
+        delete this.players[player.id];
+        if (player === this.owner) {
+            this.owner = this.players[Object.keys(this.players)[0]];
+        }
+    }
+    checkReady() {
+        for (let i in this.players) {
+            let player = this.players[i];
+            if (!player.isReady) {
+                return false;
+            }
+        }
+        return true;
+    }
+    checkFinish() {
+        for (let i in this.players) {
+            let player = this.players[i];
+            if (player.isReady) {
+                return false;
+            }
+        }
+        return true;
+    }
+}
 const client_url = process.env.CLIENT_URL;
 const uuid = (0, short_uuid_1.default)();
 // reading in the wordlist
 const wordList = fs.readFileSync('words.txt', 'utf8').replace(/(\r)/gm, "").split('\n');
+// setting up mongodb
+const user = process.env.DBUSER;
+const pass = process.env.DBPASS;
+const uri = "mongodb+srv://" + user + ":" + pass + "@webhunt-users.7qnfa.mongodb.net/?retryWrites=true&w=majority&appName=webhunt-users";
+// Create a MongoClient with a MongoClientOptions object to set the Stable API version
+const client = new mongodb_1.MongoClient(uri, {
+    serverApi: {
+        version: mongodb_1.ServerApiVersion.v1,
+        strict: true,
+        deprecationErrors: true,
+    }
+});
+function store_player(player, win) {
+    if (player.googleId !== "") {
+        console.log('storing player: ' + player.googleId);
+        client.connect().then(() => {
+            const db = client.db('webhunt-users');
+            const collection = db.collection('users');
+            collection.findOne({ googleId: player.googleId }).then((user) => {
+                if (user) {
+                    user.total_score += player.score;
+                    user.highest_score = Math.max(user.highest_score, player.score);
+                    user.games_played += 1;
+                    if (win)
+                        user.games_won += 1;
+                    user.avg_score_per_game = user.total_score / user.games_played;
+                    user.words_found += player.words.length;
+                    user.avg_score_per_word = user.total_score / user.words_found;
+                    collection.updateOne({ googleId: player.googleId }, {
+                        $set: {
+                            total_score: user.total_score,
+                            highest_score: user.highest_score,
+                            games_played: user.games_played,
+                            games_won: user.games_won,
+                            words_found: user.words_found,
+                            avg_score_per_game: user.avg_score_per_game,
+                            avg_score_per_word: user.avg_score_per_word,
+                        }
+                    });
+                }
+            });
+        });
+    }
+}
 // setting up server
 const app = (0, express_1.default)();
 require('./auth');
@@ -98,7 +236,7 @@ let player_list = {};
 // 
 let room_list = {};
 io.sockets.on('connection', (socket) => {
-    let new_player = new player_1.default(socket);
+    let new_player = new Player(socket);
     player_list[socket.id] = new_player;
     console.log('\nplayer connection %s', socket.id);
     console.log('players: %s', player_list);
@@ -141,11 +279,11 @@ io.sockets.on('connection', (socket) => {
         }
         ;
         owner.isReady = true;
-        let id = (0, helpers_1.generateRandomString)(4);
+        let id = generateRandomString(4);
         while (room_list[id] !== undefined) {
-            id = (0, helpers_1.generateRandomString)(4);
+            id = generateRandomString(4);
         }
-        let room = new room_1.default(id, owner, room_info.name, room_info.max_players, room_info.round_time, room_info.board_size);
+        let room = new Room(id, owner, room_info.name, room_info.max_players, room_info.round_time, room_info.board_size);
         room_list[room.id] = room;
         owner.socket.join(room.id);
         callback({ status: 'ok', room_id: room.id });
@@ -244,7 +382,7 @@ io.sockets.on('connection', (socket) => {
                 let player = room.players[i];
                 if (Object.keys(room.players).length !== 1) {
                     let win = player.score === final_scores[0][1];
-                    (0, db_1.store_player)(player, win);
+                    store_player(player, win);
                 }
                 player.socket.emit('update_scores', final_scores);
             }
@@ -295,8 +433,8 @@ io.sockets.on('connection', (socket) => {
             callback({ status: 'error', message: 'player not found in db' });
             return;
         }
-        db_1.default.connect().then(() => {
-            const db = db_1.default.db('webhunt-users');
+        client.connect().then(() => {
+            const db = client.db('webhunt-users');
             const collection = db.collection('users');
             collection.findOne({ googleId: player.googleId }).then((user) => {
                 callback({ status: 'ok', user: user });

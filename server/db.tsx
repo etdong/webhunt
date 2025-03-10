@@ -1,5 +1,4 @@
 import { MongoClient, ServerApiVersion } from "mongodb";
-import Player from "./models/player";
 
 // setting up mongodb
 const user = process.env.DBUSER;
@@ -16,7 +15,7 @@ const client = new MongoClient(uri, {
 
 export default client;
 
-export function store_player(player: Player, win: boolean) {
+export function store_player(player: any, win: boolean) {
     if (player.googleId !== "") {
         console.log('storing player: ' + player.googleId);
         client.connect().then(() => {

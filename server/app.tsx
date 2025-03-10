@@ -6,10 +6,128 @@ import http from 'http'
 import { Server } from 'socket.io'
 import passport from 'passport';
 import session from 'express-session';
-import client, { store_player } from './db';
-import Room from './models/room';
-import Player from './models/player';
-import { generateRandomString } from './utils/helpers';
+import { MongoClient, ServerApiVersion } from 'mongodb';
+
+function generateRandomString(length: number) {
+    const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    let result = "";
+ 
+    for (let i = 0; i < length; i++) {
+       const randomIndex = Math.floor(Math.random() * charset.length);
+       result += charset[randomIndex];
+    }
+ 
+    return result;
+ }
+
+class Player {
+    id: string;
+    name: string;
+    socket: any;
+    words: string[] = [];
+    score: number = 0;
+    isReady: boolean = false;
+    roomId: string = "menu";
+    googleId: string = "";
+
+    constructor(socket: any) {
+        this.id = socket.id;
+        this.socket = socket;
+        this.name = 'Guest_' + generateRandomString(4);
+    }    
+
+    addWord(word: string) {
+        this.words.push(word)
+    }
+
+    addScore(score: number) {
+        this.score += score;
+    }
+
+    reset() {
+        this.words = [];
+        this.score = 0;
+        this.isReady = false;
+    }
+}
+
+class Room {
+    id: string;
+    name: string;
+    owner: Player;
+    max_players: number;
+    round_time: number;
+    board_size: number;
+    players: { [key: string]: Player } = {};
+    board: { [key: number]: string[] } = {};
+    all_ready: boolean = false;
+
+    constructor(id: string, owner: Player, name: string, max_players: number, round_time: number, board_size: number) {
+        this.id = id;
+        this.owner = owner;
+        this.join(owner);
+        this.name = name;
+        this.max_players = max_players;
+        this.round_time = round_time;
+        this.board_size = board_size;
+        console.log('created room %s', this.id)
+    }
+
+    public startGame() {
+        if (!this.checkReady()) return false;
+        this.generateBoard(this.board_size);
+        console.log('game started for room %s', this.id);
+        return true;
+    }
+
+    public generateBoard(size: number) {
+        for (let i = 0; i < size; i++) {
+            this.board[i] = []
+            for (let j = 0; j < size; j++) {
+                this.board[i].push(String.fromCharCode(65 + Math.floor(Math.random() * 26)))
+            }
+        }
+        console.log('generated board for room %s', this.id)
+    }
+
+    public join(player: Player) {
+        if (Object.keys(this.players).includes(player.id)) return;
+        this.players[player.id] = player;
+        player.roomId = this.id;
+        console.log('player %s joined room %s', player.id, this.id)
+    }
+
+    public leave(player: Player) {
+        if (!Object.keys(this.players).includes(player.id)) return;
+
+        console.log('player %s left room %s', player.id, this.id)
+        delete this.players[player.id];
+
+        if (player === this.owner) {
+            this.owner = this.players[Object.keys(this.players)[0]];
+        }
+    }
+
+    public checkReady() {
+        for (let i in this.players) {
+            let player = this.players[i]
+            if (!player.isReady) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public checkFinish() {
+        for (let i in this.players) {
+            let player = this.players[i]
+            if (player.isReady) {
+                return false;
+            }
+        }
+        return true;
+    }
+}
 
 const client_url = process.env.CLIENT_URL;
 const uuid = short();
@@ -17,7 +135,52 @@ const uuid = short();
 // reading in the wordlist
 const wordList = fs.readFileSync('words.txt','utf8').replace(/(\r)/gm, "").split('\n');
 
+// setting up mongodb
+const user = process.env.DBUSER;
+const pass = process.env.DBPASS;
+const uri = "mongodb+srv://" + user + ":" + pass + "@webhunt-users.7qnfa.mongodb.net/?retryWrites=true&w=majority&appName=webhunt-users";
+// Create a MongoClient with a MongoClientOptions object to set the Stable API version
+const client = new MongoClient(uri, {
+    serverApi: {
+        version: ServerApiVersion.v1,
+        strict: true,
+        deprecationErrors: true,
+    }
+});
 
+function store_player(player: any, win: boolean) {
+    if (player.googleId !== "") {
+        console.log('storing player: ' + player.googleId);
+        client.connect().then(() => {
+            const db = client.db('webhunt-users');
+            const collection = db.collection('users');
+            collection.findOne({ googleId: player.googleId } ).then((user) => {
+                if (user) {
+                    user.total_score += player.score;
+                    user.highest_score = Math.max(user.highest_score, player.score);
+                    user.games_played += 1;
+                    if (win) user.games_won += 1;
+                    user.avg_score_per_game = user.total_score / user.games_played;
+                    user.words_found += player.words.length;
+                    user.avg_score_per_word = user.total_score / user.words_found;
+                    collection.updateOne({ googleId: player.googleId }, {
+                        $set: {
+                            total_score: user.total_score,
+                            highest_score: user.highest_score,
+                            games_played: user.games_played,
+                            games_won: user.games_won,
+                            words_found: user.words_found,
+                            avg_score_per_game: user.avg_score_per_game,
+                            avg_score_per_word: user.avg_score_per_word,
+                        }
+                    })
+                    
+                }
+            });
+        })
+    }
+
+}
 
 // setting up server
 const app = express();
