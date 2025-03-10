@@ -280,7 +280,6 @@ io.sockets.on('connection', (socket) => {
         player.socket.emit('logged_in');
     });
     socket.on('check_login', (socketId, callback) => {
-        console.log('checking login for %s', socketId);
         let player = player_list[socketId];
         if (player === undefined || player.googleId === "")
             callback(false);
