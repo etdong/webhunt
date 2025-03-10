@@ -44,7 +44,7 @@ const http_1 = __importDefault(require("http"));
 const socket_io_1 = require("socket.io");
 const passport_1 = __importDefault(require("passport"));
 const express_session_1 = __importDefault(require("express-session"));
-const db_1 = __importStar(require("./db"));
+const db_js_1 = __importStar(require("./db.js"));
 const room_js_1 = __importDefault(require("./models/room.js"));
 const player_js_1 = __importDefault(require("./models/player.js"));
 const helpers_js_1 = require("./utils/helpers.js");
@@ -244,7 +244,7 @@ io.sockets.on('connection', (socket) => {
                 let player = room.players[i];
                 if (Object.keys(room.players).length !== 1) {
                     let win = player.score === final_scores[0][1];
-                    (0, db_1.store_player)(player, win);
+                    (0, db_js_1.store_player)(player, win);
                 }
                 player.socket.emit('update_scores', final_scores);
             }
@@ -295,8 +295,8 @@ io.sockets.on('connection', (socket) => {
             callback({ status: 'error', message: 'player not found in db' });
             return;
         }
-        db_1.default.connect().then(() => {
-            const db = db_1.default.db('webhunt-users');
+        db_js_1.default.connect().then(() => {
+            const db = db_js_1.default.db('webhunt-users');
             const collection = db.collection('users');
             collection.findOne({ googleId: player.googleId }).then((user) => {
                 callback({ status: 'ok', user: user });

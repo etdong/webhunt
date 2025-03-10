@@ -6,7 +6,7 @@ import http from 'http'
 import { Server } from 'socket.io'
 import passport from 'passport';
 import session from 'express-session';
-import client, { store_player } from './db';
+import client, { store_player } from './db.js';
 import Room from './models/room.js';
 import Player from './models/player.js';
 import { generateRandomString } from './utils/helpers.js';
