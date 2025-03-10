@@ -142,6 +142,20 @@ export default function init_menu(k: KAPLAYCtx) {
         socket.on('logged_out', () => {
             loggedIn = false;
         })
+        
+        k.onDraw(() => {
+            for (let i in letters) {
+                k.drawText({
+                    text: letters[i].tags[2],
+                    anchor: 'center',
+                    pos: letters[i].pos,
+                    size: 64,
+                    scale: letters[i].scale.x * 2,
+                    font: 'gaegu',
+                    color: k.rgb(0, 0, 0),
+                });
+            }
+        })
 
         k.onUpdate(() => {
             if (!loggedIn) {
@@ -154,6 +168,7 @@ export default function init_menu(k: KAPLAYCtx) {
             updateCamPos(k, background.pos);
             updateCamZoom(k);
             for (let i in letters) {
+                
                 if (letters[i].hidden) {
                     letters[i].pos = k.center().sub(k.rand(-100, 100), 300 + k.rand(-100, 100));
                 }

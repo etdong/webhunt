@@ -57,7 +57,6 @@ export default function init_stats(k: KAPLAYCtx) {
         })
 
         socket.emit('request_stats', socket.id, (response: any) => {
-            console.log(response);
             if (response.status === 'ok') {
                 let user = response.user
                 title.text += user.displayName;

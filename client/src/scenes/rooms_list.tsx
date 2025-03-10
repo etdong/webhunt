@@ -157,7 +157,6 @@ export default function init_rooms_list(k: KAPLAYCtx) {
                             room_objs.push(room_obj);
                         }
                     }
-                    console.log(room_objs)
                 } 
             });
         }

@@ -75,12 +75,6 @@ export default function init_create_room(k: KAPLAYCtx) {
         })
 
         create.onClick(() => {
-            if (fields[0].text === '') {
-                create.color = k.rgb(255, 0, 0);
-                error.text = 'name cannot be empty';
-                k.wait(0.5, () => create.color = k.rgb(0, 0, 0));
-                return;
-            }
             let room_info = {
                 name: fields[0].text,
                 max_players: parseInt(fields[1].text),
@@ -264,6 +258,12 @@ const init_fields = (k: KAPLAYCtx) => {
         k.anchor('center'),
         k.color(0, 0, 0),
     ])
+
+    name_input.onClick(() => {
+        let text = prompt('enter a room name: ');
+        if (text === null) return;
+        name_input.text = text;
+    })
 
     k.onClick('players_up', () => {
         let count = parseInt(player_count.text);

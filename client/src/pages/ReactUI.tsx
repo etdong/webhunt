@@ -1,4 +1,3 @@
-import { log } from "console";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
@@ -12,7 +11,7 @@ export default function ReactUI() {
 	const [user, setUser] = useState({ loggedIn: false, displayName: "", id: ""});
 
 	useEffect(() => {
-		fetch(process.env.REACT_APP_SERVER_URL + '/account', { credentials: 'include' })
+		fetch("https://webhunt.onrender.com/account", { credentials: 'include' })
 			.then(res => res.json())
 			.then(data => {
 				setUser(data);

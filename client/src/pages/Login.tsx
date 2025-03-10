@@ -4,8 +4,7 @@ export default function Login() {
 
     const handleSubmit = (e: any) => {
         e.preventDefault();
-        console.log(process.env.REACT_APP_SERVER_URL)
-        const url = process.env.REACT_APP_SERVER_URL + '/auth/google';
+        const url = "https://webhunt.onrender.com/auth/google";
         window.open(url, '_self');
     }
 	

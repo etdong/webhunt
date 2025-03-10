@@ -8,9 +8,21 @@ export default function init_game(k: KAPLAYCtx) {
     k.scene('game', (data) => {
 
         // declarations
-        let board: { [key: number]: string[] } = data.board;
-        let time: number = data.round_time;
-        let room_id = data.room_id;
+        // let board: { [key: number]: string[] } = data.board;
+        // let time: number = data.round_time;
+        // let room_id = data.room_id;
+
+        let board: { [key: number]: string[] } = {
+            0: ['a', 'b', 'c', 'd', 'e'],
+            1: ['f', 'g', 'h', 'i', 'j'], 
+            2: ['k', 'l', 'm', 'n', 'o'],
+            3: ['p', 'q', 'r', 's', 't'],
+            4: ['u', 'v', 'w', 'x', 'y'],
+        }
+
+        let time: number = -1;
+        let room_id = 'test';
+
         let total_score = 0;
         let selected: any[] = [];
         let points: Vec2[] = [];
@@ -66,23 +78,46 @@ export default function init_game(k: KAPLAYCtx) {
         })
         
         for (let i = 0; i < size; i++) {
-            for (let j = 0; j < size; j++) {    
+            for (let j = 0; j < size; j++) {   
+                let letterPos = k.vec2(k.center().sub(side_length/2 - 64 - i * 128, side_length/2 - 64 - j * 128))
                 k.add([
-                    k.sprite(board[i][j]),
+                    k.polygon([
+                        k.vec2(118, 118),
+                        k.vec2(128, 100),
+                        k.vec2(128, -100),
+                        k.vec2(118, -118),
+                        k.vec2(100, -128),
+                        k.vec2(-100, -128),
+                        k.vec2(-118, -118),
+                        k.vec2(-128, -100),
+                        k.vec2(-128, 100),
+                        k.vec2(-118, 118),
+                        k.vec2(-100, 128),
+                        k.vec2(100, 128),
+        
+                    ], {fill: false}),
+                    k.outline(6),
                     k.scale(0.5),
-                    k.area({ shape: new k.Polygon([
-                        k.vec2(96, 0),
-                        k.vec2(160, 0),
-                        k.vec2(256, 96),
-                        k.vec2(256, 160),
-                        k.vec2(160, 256),
-                        k.vec2(96, 256),
-                        k.vec2(0, 160),
-                        k.vec2(0, 96),
+                    k.area({shape: new k.Polygon([
+                        k.vec2(128, -32),
+                        k.vec2(128, 32),
+                        k.vec2(32, 128),
+                        k.vec2(-32, 128),
+                        k.vec2(-128, 32),
+                        k.vec2(-128, -32),
+                        k.vec2(-32, -128),
+                        k.vec2(32, -128),
                     ])}),
-                    k.pos(k.center().sub(side_length/2 - i * 128, side_length/2 - j * 128)),
+                    k.pos(letterPos),
                     board[i][j],
                     'letter',
+                ])
+                k.add([
+                    k.text(board[i][j], {size: 64, font: 'gaegu'}),
+                    k.pos(letterPos),
+                    k.anchor('center'),
+                    k.color(0, 0, 0),
+                    k.z(-1),
                 ])
             }   
         }
@@ -108,11 +143,11 @@ export default function init_game(k: KAPLAYCtx) {
                             dist_y <= 130
                         ) {
                             selected.push(letter);
-                            points.push(letter.pos.add(64));
+                            points.push(letter.pos);
                         }
                     } else {
                         selected.push(letter);
-                        points.push(letter.pos.add(64));
+                        points.push(letter.pos);
                     }
                 }
             }

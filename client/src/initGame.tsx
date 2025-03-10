@@ -19,8 +19,8 @@ export default async function initGame() {
     k.loadFont('gaegu', './fonts/Gaegu-Regular.ttf')
 
     // load letters
-    for (let i = 0; i < 26; i++)
-        k.loadSprite(`${String.fromCharCode(65 + i)}`, `./letters/${String.fromCharCode(65 + i)}.png`)
+    // for (let i = 0; i < 26; i++)
+    //     k.loadSprite(`${String.fromCharCode(65 + i)}`, `./fonts/${String.fromCharCode(65 + i)}.png`)
 
 	
     // scenes
@@ -33,5 +33,5 @@ export default async function initGame() {
     init_scores(k)
     init_stats(k)
 
-	k.go('menu')
+	k.go('game')
 }
