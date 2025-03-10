@@ -209,7 +209,6 @@ app.get(
     "/google/callback", 
     passport.authenticate('google', { session: true }),
     (_, res) => {
-        res.send(client_url)
         res.redirect(client_url || 'https://webhunt.donger.ca');
     }   
 );
