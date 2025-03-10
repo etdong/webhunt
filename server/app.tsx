@@ -190,7 +190,16 @@ app.use(cors({
     credentials: true,            //access-control-allow-credentials:true
     optionsSuccessStatus: 200
 }));
-app.use(session({ secret: process.env.GOOGLE_CLIENT_SECRET }))
+app.use(session({
+    maxAge: 24 * 60 * 60,
+    secret: process.env.GOOGLE_CLIENT_SECRET,
+    secure: true,
+    sameSite: "none", 
+}))
+app.use((req: any, res, next)=>{
+    req["sessionCookies"].secure = true;
+    next();
+});
 app.use(passport.initialize());
 app.use(passport.session());
 
