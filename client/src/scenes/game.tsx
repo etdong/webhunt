@@ -8,20 +8,9 @@ export default function init_game(k: KAPLAYCtx) {
     k.scene('game', (data) => {
 
         // declarations
-        // let board: { [key: number]: string[] } = data.board;
-        // let time: number = data.round_time;
-        // let room_id = data.room_id;
-
-        let board: { [key: number]: string[] } = {
-            0: ['a', 'b', 'c', 'd', 'e'],
-            1: ['f', 'g', 'h', 'i', 'j'], 
-            2: ['k', 'l', 'm', 'n', 'o'],
-            3: ['p', 'q', 'r', 's', 't'],
-            4: ['u', 'v', 'w', 'x', 'y'],
-        }
-
-        let time: number = -1;
-        let room_id = 'test';
+        let board: { [key: number]: string[] } = data.board;
+        let time: number = data.round_time;
+        let room_id = data.room_id;
 
         let total_score = 0;
         let selected: any[] = [];
