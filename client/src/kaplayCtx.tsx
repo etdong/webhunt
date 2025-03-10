@@ -5,8 +5,7 @@ export default function makeKaplayCtx() {
         global: false,
         pixelDensity: 2,
         touchToMouse: true,
-        debug: true,
-        debugKey: 'u',
+        debug: false,
         canvas: document.getElementById('game') as HTMLCanvasElement,
         background: [255, 255, 255],
     });
