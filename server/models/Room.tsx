@@ -1,4 +1,4 @@
-import Player from "./Player";
+import Player from "./player";
 
 export default class Room {
     id: string;

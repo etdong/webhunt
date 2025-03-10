@@ -6,7 +6,10 @@ import http from 'http'
 import { Server } from 'socket.io'
 import passport from 'passport';
 import session from 'express-session';
-import Player from './models/Player';
+import Player from './models/player';
+import client, { store_player } from './db';
+import { generateRandomString } from './utils/helpers';
+import Room from './models/room';
 
 const client_url = process.env.CLIENT_URL;
 const uuid = short();
@@ -14,9 +17,7 @@ const uuid = short();
 // reading in the wordlist
 const wordList = fs.readFileSync('words.txt','utf8').replace(/(\r)/gm, "").split('\n');
 
-import client, { store_player } from './db';
-import { generateRandomString } from './utils/helpers';
-import Room from './models/Room';
+
 
 // setting up server
 const app = express();

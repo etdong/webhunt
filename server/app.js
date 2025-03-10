@@ -44,14 +44,14 @@ const http_1 = __importDefault(require("http"));
 const socket_io_1 = require("socket.io");
 const passport_1 = __importDefault(require("passport"));
 const express_session_1 = __importDefault(require("express-session"));
-const Player_1 = __importDefault(require("./models/Player"));
+const player_1 = __importDefault(require("./models/player"));
+const db_1 = __importStar(require("./db"));
+const helpers_1 = require("./utils/helpers");
+const room_1 = __importDefault(require("./models/room"));
 const client_url = process.env.CLIENT_URL;
 const uuid = (0, short_uuid_1.default)();
 // reading in the wordlist
 const wordList = fs.readFileSync('words.txt', 'utf8').replace(/(\r)/gm, "").split('\n');
-const db_1 = __importStar(require("./db"));
-const helpers_1 = require("./utils/helpers");
-const Room_1 = __importDefault(require("./models/Room"));
 // setting up server
 const app = (0, express_1.default)();
 require('./auth');
@@ -98,7 +98,7 @@ let player_list = {};
 // 
 let room_list = {};
 io.sockets.on('connection', (socket) => {
-    let new_player = new Player_1.default(socket);
+    let new_player = new player_1.default(socket);
     player_list[socket.id] = new_player;
     console.log('\nplayer connection %s', socket.id);
     console.log('players: %s', player_list);
@@ -145,7 +145,7 @@ io.sockets.on('connection', (socket) => {
         while (room_list[id] !== undefined) {
             id = (0, helpers_1.generateRandomString)(4);
         }
-        let room = new Room_1.default(id, owner, room_info.name, room_info.max_players, room_info.round_time, room_info.board_size);
+        let room = new room_1.default(id, owner, room_info.name, room_info.max_players, room_info.round_time, room_info.board_size);
         room_list[room.id] = room;
         owner.socket.join(room.id);
         callback({ status: 'ok', room_id: room.id });
