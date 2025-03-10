@@ -299,6 +299,7 @@ io.sockets.on('connection', (socket: any) => {
     })
 
     socket.on('check_login', (socketId: string, callback: any) => {
+        console.log('checking login for %s', socketId)
         let player = player_list[socketId];
         if (player === undefined || player.googleId === "") callback(false);
         callback(true);
