@@ -43,7 +43,7 @@ const express_1 = __importDefault(require("express"));
 const http_1 = __importDefault(require("http"));
 const socket_io_1 = require("socket.io");
 const passport_1 = __importDefault(require("passport"));
-const cookie_session_1 = __importDefault(require("cookie-session"));
+const express_session_1 = __importDefault(require("express-session"));
 const mongodb_1 = require("mongodb");
 function generateRandomString(length) {
     const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -197,10 +197,14 @@ app.use((0, cors_1.default)({
     origin: "https://webhunt.donger.ca",
     credentials: true, //access-control-allow-credentials:true
 }));
-app.use((0, cookie_session_1.default)({
+app.use((0, express_session_1.default)({
     secret: "secret",
-    secure: true,
-    sameSite: 'none',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        secure: true,
+        sameSite: 'none',
+    }
 }));
 app.use(passport_1.default.initialize());
 app.use(passport_1.default.session());

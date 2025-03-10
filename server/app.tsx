@@ -5,7 +5,7 @@ import express from 'express';
 import http from 'http'
 import { Server } from 'socket.io'
 import passport from 'passport';
-import session from 'cookie-session';
+import session from 'express-session';
 import { MongoClient, ServerApiVersion } from 'mongodb';
 
 function generateRandomString(length: number) {
@@ -192,8 +192,12 @@ app.use(cors({
 
 app.use(session({ 
     secret: "secret",
-    secure: true,
-    sameSite: 'none',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        secure: true,
+        sameSite: 'none',
+    }
 }))
 app.use(passport.initialize());
 app.use(passport.session());
