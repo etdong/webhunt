@@ -197,6 +197,7 @@ app.use((0, cors_1.default)({
     origin: "https://webhunt.donger.ca",
     credentials: true, //access-control-allow-credentials:true
 }));
+app.set('trust proxy', 1);
 app.use((0, express_session_1.default)({
     secret: "secret",
     resave: false,
@@ -204,7 +205,9 @@ app.use((0, express_session_1.default)({
     cookie: {
         secure: true,
         sameSite: 'none',
-    }
+        maxAge: 1000 * 60 * 60 * 24
+    },
+    proxy: true,
 }));
 app.use(passport_1.default.initialize());
 app.use(passport_1.default.session());

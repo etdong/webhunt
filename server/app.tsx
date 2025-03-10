@@ -190,6 +190,7 @@ app.use(cors({
     credentials: true,            //access-control-allow-credentials:true
 }));
 
+app.set('trust proxy', 1)
 app.use(session({ 
     secret: "secret",
     resave: false,
@@ -197,7 +198,9 @@ app.use(session({
     cookie: {
         secure: true,
         sameSite: 'none',
-    }
+        maxAge: 1000 * 60 * 60 * 24
+    },
+    proxy: true,
 }))
 app.use(passport.initialize());
 app.use(passport.session());
