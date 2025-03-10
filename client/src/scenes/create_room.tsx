@@ -20,13 +20,6 @@ export default function init_create_room(k: KAPLAYCtx) {
             k.color(0, 0, 0),
         ])
 
-        let error = k.add([
-            k.text('', { size: 48, font: 'gaegu' }),
-            k.pos(k.center().x, k.center().y + 260),
-            k.anchor('center'),
-            k.color(0, 0, 0),
-        ])
-
         let cancel = k.add([
             k.text('cancel', { size: 64, font: 'gaegu' }),
             k.pos(k.center().x - 128, k.center().y + 320),

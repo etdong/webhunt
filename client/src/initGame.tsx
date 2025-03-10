@@ -33,5 +33,5 @@ export default async function initGame() {
     init_scores(k)
     init_stats(k)
 
-	k.go('game')
+	k.go('menu')
 }
