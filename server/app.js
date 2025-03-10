@@ -216,19 +216,18 @@ app.get("/", (_, res) => {
 app.get("/auth/google", passport_1.default.authenticate('google', {
     scope: ['profile']
 }));
-app.get("/google/callback", passport_1.default.authenticate('google', { session: true }), (req, res) => {
-    res.cookie("user", req.user);
+app.get("/google/callback", passport_1.default.authenticate('google', { session: true }), (_, res) => {
     res.redirect(client_url || 'https://webhunt.donger.ca');
 });
 function isAuthenticated(req, res, next) {
-    console.log(req.cookies.user);
-    if (req.cookies.user)
+    console.log(req);
+    if (req.user)
         next();
     else
         res.json({ loggedIn: false });
 }
 app.get("/account", isAuthenticated, (req, res) => {
-    const user = Object.assign(Object.assign({}, req.cookies.user), { loggedIn: true });
+    const user = Object.assign(Object.assign({}, req.user), { loggedIn: true });
     res.json(user);
 });
 const serv = http_1.default.createServer(app);
