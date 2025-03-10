@@ -298,7 +298,7 @@ io.sockets.on('connection', (socket: any) => {
         player.name = name;
         player.googleId = googleId;
         console.log('login: %s; %s', player.name, player.googleId)
-        socket.emit('logged_in');
+        player.socket.emit('logged_in');
     })
 
     socket.on('check_login', (socketId: string, callback: any) => {
@@ -307,7 +307,7 @@ io.sockets.on('connection', (socket: any) => {
             callback({status: false, message: 'player not found'});
             return;
         }
-        socket.emit('request_login', (response: any) => {
+        player.socket.emit('request_login', (response: any) => {
             if (response.status === 'ok') {
                 let user = response.user;
                 player.name = user.displayName;
