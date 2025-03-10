@@ -218,14 +218,15 @@ app.get(
 app.get(
     "/google/callback", 
     passport.authenticate('google', { session: true }),
-    (_, res) => {
+    (req, res) => {
+        res.cookie("user", req.user);
         res.redirect(client_url || 'https://webhunt.donger.ca');
     }   
 );
 
 function isAuthenticated(req: any, res: any, next: any) {
-    console.log(req.user);
-    if (req.user) next();
+    console.log(req.cookies.user);
+    if (req.cookies.user) next();
     else res.json({ loggedIn: false});
 }
 
@@ -234,7 +235,7 @@ app.get(
     isAuthenticated,
     (req, res) => {
         const user = {
-            ...req.user,
+            ...req.cookies.user,
             loggedIn: true
         }
         res.json(user);
