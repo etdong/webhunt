@@ -280,23 +280,12 @@ io.sockets.on('connection', (socket) => {
     });
     socket.on('check_login', (socketId, callback) => {
         let player = player_list[socketId];
-        if (player === undefined) {
+        if (player === undefined)
             callback({ status: false, message: 'player not found' });
-            return;
-        }
-        player.socket.emit('request_login', (response) => {
-            if (response.status === 'ok') {
-                let user = response.user;
-                player.name = user.displayName;
-                player.googleId = user.googleId;
-                callback({ status: true, message: 'logged in' });
-                return;
-            }
-            else {
-                callback({ status: false, message: 'not logged in' });
-                return;
-            }
-        });
+        else if (player.googleId === "")
+            callback({ status: false, message: 'google id not found' });
+        else
+            callback({ status: true, message: 'logged in' });
     });
     socket.on('create_room', (socketId, room_info, callback) => {
         let owner = player_list[socketId];
