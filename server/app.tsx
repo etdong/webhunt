@@ -222,7 +222,7 @@ app.get(
 );
 
 function isAuthenticated(req: any, res: any, next: any) {
-    console.log(req);
+    console.log(req.user);
     if (req.user) next();
     else res.json({ loggedIn: false});
 }
