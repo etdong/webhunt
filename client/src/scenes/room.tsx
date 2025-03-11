@@ -64,11 +64,11 @@ export default function init_room(k: KAPLAYCtx) {
             board_size.text = room.board_size + 'x' + room.board_size;
             room_id.text = room.id;
             if (isOwner) {
-                start.hidden = false;
-                ready.destroy()
+                start.scale = k.vec2(1)
+                ready.scale = k.vec2(0);
             } else {
-                start.destroy();
-                ready.hidden = false;
+                start.scale = k.vec2(0);
+                ready.scale = k.vec2(1);
             }
         })
 
