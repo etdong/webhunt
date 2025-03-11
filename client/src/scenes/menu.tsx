@@ -1,4 +1,4 @@
-import { GameObj, KAPLAYCtx, Vec2 } from "kaplay";
+import { GameObj, KAPLAYCtx } from "kaplay";
 import { getRelativeMousePos, updateCamPos, updateCamZoom } from "../utils/camUtils";
 
 import socket from "src/components/socket";
@@ -163,7 +163,6 @@ export default function init_menu(k: KAPLAYCtx) {
             updateCamPos(k, background.pos);
             updateCamZoom(k);
             for (let i in letters) {
-                
                 if (letters[i].hidden) {
                     letters[i].pos = k.center().sub(k.rand(-100, 100), 300 + k.rand(-100, 100));
                 }
