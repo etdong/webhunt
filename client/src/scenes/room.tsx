@@ -64,11 +64,15 @@ export default function init_room(k: KAPLAYCtx) {
             board_size.text = room.board_size + 'x' + room.board_size;
             room_id.text = room.id;
             if (isOwner) {
-                start.scale = k.vec2(1)
-                ready.scale = k.vec2(0);
+                start.area.scale = k.vec2(1)
+                start.hidden = false;
+                ready.area.scale = k.vec2(0);
+                ready.hidden = true;
             } else {
-                start.scale = k.vec2(0);
-                ready.scale = k.vec2(1);
+                start.area.scale = k.vec2(0);
+                start.hidden = true;
+                ready.area.scale = k.vec2(1);
+                ready.hidden = false;
             }
         })
 
@@ -223,19 +227,18 @@ function draw_room(k: KAPLAYCtx) {
         k.text('start', { size: 64, font: 'gaegu' }),
         k.pos(buttons_pos.add(96, 0)),
         k.anchor('center'),
-        k.area(),
+        k.area({ scale: 0 }),
         k.color(0, 0, 0),
         k.scale(1),
         'menu_button',
     ])
-
-    start.scale = k.vec2(0)
+    start.hidden = true;
 
     let ready = k.add([
         k.text('ready', { size: 64, font: 'gaegu' }),
         k.pos(buttons_pos.add(96, 0)),
         k.anchor('center'),
-        k.area(),
+        k.area({ scale: 0 }),
         k.color(255, 0, 0),
         k.scale(1),
         'menu_button',
@@ -244,7 +247,7 @@ function draw_room(k: KAPLAYCtx) {
         }
     ])
 
-    ready.scale = k.vec2(0)
+    start.hidden = true;
 
     let elements: GameObj[] = [room_name, max_players, round_time, board_size, room_id, lobby, leave, start, ready]
     return elements
