@@ -105,6 +105,7 @@ class Room {
 
         console.log('player %s left room %s', player.id, this.id)
         delete this.players[player.id];
+        player.isReady = false;
 
         if (player === this.owner) {
             this.owner = this.players[Object.keys(this.players)[0]];
