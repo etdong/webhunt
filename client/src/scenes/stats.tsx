@@ -61,7 +61,7 @@ export default function init_stats(k: KAPLAYCtx) {
         socket.emit('request_stats', socket.id, (response: any) => {
             if (response.status === 'ok') {
                 let user = response.user
-                title.text += user.displayName;
+                title.text += user.name;
                 stats[0].text = user.total_score;
                 stats[1].text = user.highest_score;
                 stats[2].text = user.games_played;

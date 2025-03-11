@@ -8,7 +8,7 @@ export default function ReactUI() {
 	let c = document.getElementById('game') as HTMLCanvasElement;
     c.hidden = false;
 
-	const [user, setUser] = useState({ loggedIn: false, displayName: "", id: ""});
+	const [user, setUser] = useState({ loggedIn: false, name: {givenName: "", familyName: ""}, id: ""});
 
 	useEffect(() => {
 		fetch("https://webhunt.onrender.com/account", { 
@@ -24,11 +24,11 @@ export default function ReactUI() {
 	const menuComponent = () => {
 		if (user.loggedIn) {
 			setInterval(() => {
-				socket.emit('login', socket.id, user.displayName, user.id);
+				socket.emit('login', socket.id, user.name.givenName, user.id);
 			}, 200);
 			return (
 			<div id='menu'>
-				<div>Logged in as {'' + user.displayName}</div>
+				<div>Logged in as {'' + user.name.givenName}</div>
 			</div>
 			)
 		} else {
