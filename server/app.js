@@ -122,7 +122,11 @@ class Room {
         delete this.players[player.id];
         player.isReady = false;
         if (player === this.owner) {
-            this.owner = this.players[Object.keys(this.players)[0]];
+            let new_owner = this.players[Object.keys(this.players)[0]];
+            if (new_owner === undefined)
+                return;
+            new_owner.isReady = true;
+            this.owner = new_owner;
         }
     }
     checkReady() {
