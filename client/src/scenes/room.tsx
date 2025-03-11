@@ -228,7 +228,8 @@ function draw_room(k: KAPLAYCtx) {
         k.scale(1),
         'menu_button',
     ])
-    start.hidden = true;
+
+    start.scale = k.vec2(0)
 
     let ready = k.add([
         k.text('ready', { size: 64, font: 'gaegu' }),
@@ -242,7 +243,8 @@ function draw_room(k: KAPLAYCtx) {
             ready: false,
         }
     ])
-    ready.hidden = false;
+
+    ready.scale = k.vec2(0)
 
     let elements: GameObj[] = [room_name, max_players, round_time, board_size, room_id, lobby, leave, start, ready]
     return elements
