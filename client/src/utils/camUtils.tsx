@@ -1,7 +1,7 @@
 import { KAPLAYCtx } from "kaplay";
 
 export const updateCamZoom = (k: KAPLAYCtx) => {
-    if (k.width() < 750 || k.height() < 800) {
+    if (k.width() < 1000 || k.height() < 800) {
         k.setCamScale(0.5)
     } else {
         k.setCamScale(1)

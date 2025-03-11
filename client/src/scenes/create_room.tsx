@@ -8,10 +8,12 @@ export default function init_create_room(k: KAPLAYCtx) {
 
         let background = k.add([
             k.rect(k.width(), k.height()),
-            k.area(),
             k.anchor('center'),
             k.pos(k.center()),
         ])
+
+        updateCamPos(k, background.pos);
+        updateCamZoom(k);
 
         k.add([
             k.text('Create a room', { size: 64, font: 'gaegu' }),

@@ -8,10 +8,12 @@ export default function init_stats(k: KAPLAYCtx) {
 
         let background = k.add([
             k.rect(k.width(), k.height()),
-            k.area(),
             k.anchor('center'),
             k.pos(k.center()),
         ])
+
+        updateCamPos(k, background.pos);
+        updateCamZoom(k);
 
         let stats = drawStats(k);
 

@@ -7,10 +7,12 @@ export default function init_join_room(k: KAPLAYCtx) {
     k.scene('join_room', () => {
         let background = k.add([
             k.rect(k.width(), k.height()),
-            k.area(),
             k.anchor('center'),
             k.pos(k.center()),
         ])
+
+        updateCamPos(k, background.pos);
+        updateCamZoom(k);
 
         k.add([
             k.text('Join a room', { size: 64, font: 'gaegu' }),
@@ -126,8 +128,15 @@ function init_fields(k: KAPLAYCtx) {
         k.anchor('center'),
         k.color(0, 0, 0),
         'input',
-        k.area(),
+        k.area({ shape: new k.Rect(k.vec2(0, 0), 256, 64) }),
     ])
+
+    input.onClick(() => {
+        let text = prompt('enter a room id: ');
+        if (text === null) return;
+        input.text = text;
+    })
+
     fields.push(input);
 
     return fields;
