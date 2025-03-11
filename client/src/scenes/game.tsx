@@ -18,6 +18,16 @@ export default function init_game(k: KAPLAYCtx) {
         let size = Object.keys(board).length;
         let side_length = 128 * size;
 
+        let background = k.add([
+            k.rect(k.width(), k.height()),
+            k.anchor('center'),
+            k.pos(k.center()),
+        ])
+        updateCamPos(k, background.pos);
+        updateCamZoom(k);
+
+        k.setCamScale(k.getCamScale().x * 5/size);
+
         // component drawing
         let board_container = drawBoard(k, size);
 
@@ -170,7 +180,6 @@ export default function init_game(k: KAPLAYCtx) {
         })
 
         k.onUpdate(() => {
-            updateCamZoom(k);
             updateCamPos(k, board_container.pos);
         })
     })
