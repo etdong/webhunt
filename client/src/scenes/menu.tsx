@@ -1,14 +1,12 @@
-import { KAPLAYCtx } from "kaplay";
+import { GameObj, KAPLAYCtx, Vec2 } from "kaplay";
 import { getRelativeMousePos, updateCamPos, updateCamZoom } from "../utils/camUtils";
 
 import socket from "src/components/socket";
-import { draw_with_tiles } from "src/utils/drawUtils";
 
 export default function init_menu(k: KAPLAYCtx) {
     k.scene('menu', () => {
 
         // declarations
-        let title = 'WEBHUNT';
         let clicked: any = null;
         let loggedIn = false;
 
@@ -16,9 +14,13 @@ export default function init_menu(k: KAPLAYCtx) {
         let background = k.add([
             k.rect(k.width(), k.height()),
             k.area(),
+            k.scale(2),
             k.anchor('center'),
             k.pos(k.center()),
         ])
+
+        updateCamPos(k, background.pos);
+        updateCamZoom(k);
 
         let menu_labels = ['rooms list', 'create a room', 'join by code', 'stats'];
         let menu_buttons: any[] = [];
@@ -38,7 +40,7 @@ export default function init_menu(k: KAPLAYCtx) {
         }
 
 
-        let letters = draw_with_tiles(k, title);
+        let letters = draw_title(k);
         
 
         // event handlers
@@ -170,4 +172,86 @@ export default function init_menu(k: KAPLAYCtx) {
 
         
     });
+}
+
+function draw_title(k: KAPLAYCtx) {
+    let letters: GameObj[] = [];
+    let title = "WEBHUNT"
+    let polygon = [k.vec2(118, 118),
+        k.vec2(128, 100),
+        k.vec2(128, -100),
+        k.vec2(118, -118),
+        k.vec2(100, -128),
+        k.vec2(-100, -128),
+        k.vec2(-118, -118),
+        k.vec2(-128, -100),
+        k.vec2(-128, 100),
+        k.vec2(-118, 118),
+        k.vec2(-100, 128),
+        k.vec2(100, 128)];
+    if (k.getCamScale().x !== 1) {
+        for (let i = 0; i < 3; i++) {
+            let letter = k.add([
+                k.anchor('center'),
+                k.polygon(polygon, {fill: true}),
+                k.outline(6),
+                k.area(),
+                k.body(),
+                k.pos(k.center().x - 3/2 * 128 + 64 + i * 128, k.center().y - 384),
+                k.scale(0.5),
+                k.color(k.rgb(255, 224, 170)),
+                k.offscreen({
+                    hide: true,
+                    distance: 64,
+                }),
+                'letter',
+                title.charAt(i),
+            ]);
+            letters.push(letter);
+        }
+
+        for (let i = 3; i < title.length; i++) {
+            let letter = k.add([
+                k.anchor('center'),
+                k.polygon(polygon, {fill: true}),
+                k.outline(6),
+                k.area(),
+                k.body(),
+                k.pos(k.center().x - 2 * 128 + 64 + (i-3) * 128, k.center().y - 256),
+                k.scale(0.5),
+                k.color(k.rgb(255, 224, 170)),
+                k.offscreen({
+                    hide: true,
+                    distance: 64,
+                }),
+                'letter',
+                title.charAt(i),
+            ]);
+            letters.push(letter);
+        }
+        return letters;
+    } else {
+        for (let i = 0; i < title.length; i++) {
+            let letter = k.add([
+                k.anchor('center'),
+                k.polygon(polygon, {fill: true}),
+                k.outline(6),
+                k.area(),
+                k.body(),
+                k.pos(k.center().x - title.length/2 * 128 + 64 + i * 128, k.center().y - 256),
+                k.scale(0.5),
+                k.color(k.rgb(255, 224, 170)),
+                k.offscreen({
+                    hide: true,
+                    distance: 64,
+                }),
+                'letter',
+                title.charAt(i),
+            ]);
+    
+            letters.push(letter);
+        }
+    }
+    
+    return letters;
 }
