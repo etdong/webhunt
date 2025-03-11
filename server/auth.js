@@ -30,7 +30,7 @@ passport_1.default.use(new GoogleStrategy({
             if (!user) {
                 collection.insertOne({
                     googleId: profile.id,
-                    displayName: profile.displayName,
+                    name: profile.name.givenName,
                     total_score: 0,
                     highest_score: 0,
                     games_played: 0,
