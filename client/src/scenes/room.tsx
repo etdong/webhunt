@@ -5,8 +5,8 @@ import { updateCamPos, updateCamZoom } from "src/utils/camUtils";
 
 export default function init_room(k: KAPLAYCtx) {
     k.scene('room', () => {
-        let player_names: string[] = ["player1", "player2"];
-        let ready_states: boolean[] = [false, false];
+        let player_names: string[] = [];
+        let ready_states: boolean[] = [];
 
         let background = k.add([
             k.rect(k.width(), k.height()),
@@ -94,9 +94,13 @@ export default function init_room(k: KAPLAYCtx) {
 
         k.onDraw(() => {
             for (let i = 0; i < player_names.length; i++) {
+                let name = player_names[i];
+                if (name.length > 16) {
+                    name = name.slice(0, 16) + '...';
+                }
                 k.drawText({
                     anchor: 'left',
-                    text: i + 1 + '. ' + player_names[i],
+                    text: i + 1 + '. ' + name,
                     size: 32,
                     font: 'gaegu',
                     pos: k.vec2(lobby.pos.x - lobby.width/2 + 32, lobby.pos.y - 256 + i * 34),
@@ -108,15 +112,13 @@ export default function init_room(k: KAPLAYCtx) {
                     text: ready_states[i] ? 'ready' : '',
                     size: 32,
                     font: 'gaegu',
-                    pos: k.vec2(lobby.pos.x + lobby.width - 32, lobby.pos.y - 256 + i * 34),
+                    pos: k.vec2(lobby.pos.x + lobby.width/2 - 32, lobby.pos.y - 256 + i * 34),
                     color: k.rgb(0, 0, 0),
                 })
             }
         })
 
         k.onUpdate(() => {
-            
-
             updateCamPos(k, background.pos);
             updateCamZoom(k);
         })
@@ -166,35 +168,35 @@ function draw_room(k: KAPLAYCtx) {
     ])
 
     let room_name = k.add([
-        k.text('room_name', { size: 64, font: 'gaegu' }),
+        k.text('...', { size: 64, font: 'gaegu' }),
         k.pos(base_pos.x, base_pos.y - y_offset - 360),
         k.anchor('center'),
         k.color(0, 0, 0),
     ])
 
     let max_players = k.add([
-        k.text('2', { size: 48, font: 'gaegu' }),
+        k.text('...', { size: 48, font: 'gaegu' }),
         k.pos(base_pos.x - x_offset - 32, base_pos.y - y_offset - 256),
         k.anchor('right'),
         k.color(0, 0, 0),
     ])
 
     let round_time = k.add([
-        k.text('3', { size: 48, font: 'gaegu' }),
+        k.text('...', { size: 48, font: 'gaegu' }),
         k.pos(base_pos.x - x_offset - 32, base_pos.y - y_offset - 192),
         k.anchor('right'),
         k.color(0, 0, 0),
     ])
 
     let board_size = k.add([
-        k.text('4', { size: 48, font: 'gaegu' }),
+        k.text('...', { size: 48, font: 'gaegu' }),
         k.pos(base_pos.x - x_offset - 32, base_pos.y - y_offset - 128),
         k.anchor('right'),
         k.color(0, 0, 0),
     ])
 
     let room_id = k.add([
-        k.text('WWWW', { size: 40 }),
+        k.text('...', { size: 40 }),
         k.pos(base_pos.x - x_offset - 48, base_pos.y - y_offset - 64),
         k.anchor('center'),
         k.color(0, 0, 0),
