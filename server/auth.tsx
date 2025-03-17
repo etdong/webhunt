@@ -1,18 +1,5 @@
-import { MongoClient, ServerApiVersion } from "mongodb";
 import passport from "passport";
-
-// setting up mongodb
-const user = process.env.DBUSER;
-const pass = process.env.DBPASS;
-const uri = "mongodb+srv://" + user + ":" + pass + "@webhunt-users.7qnfa.mongodb.net/?retryWrites=true&w=majority&appName=webhunt-users";
-// Create a MongoClient with a MongoClientOptions object to set the Stable API version
-const client = new MongoClient(uri, {
-    serverApi: {
-        version: ServerApiVersion.v1,
-        strict: true,
-        deprecationErrors: true,
-    }
-});
+let db = require('./db');
 
 // we are using the google oauth strategy
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
@@ -25,10 +12,9 @@ passport.use(new GoogleStrategy({
     },
     (profile: any, cb: any) => {
         // check if the user exists in the database
-        client.connect().then(() => {
-            const db = client.db('webhunt-users');
-            const collection = db.collection('users');
-            collection.findOne({ googleId: profile.id }).then((user) => {
+        db.client.connect().then(() => {
+            const collection = db.client.db('webhunt-users').collection('users');
+            collection.findOne({ googleId: profile.id }).then((user: any) => {
                 // if the user does not exist, add them to the database
                 if (!user) {
                     collection.insertOne({

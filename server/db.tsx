@@ -1,4 +1,3 @@
-
 import { MongoClient, ServerApiVersion } from "mongodb";
 
 // setting up mongodb
@@ -16,7 +15,6 @@ const client = new MongoClient(uri, {
 
 // client singleton
 export default client;
-
 
 /**
  * Stores player information in the MongoDB database. This is called at the end of each game.

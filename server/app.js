@@ -38,164 +38,15 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const cors_1 = __importDefault(require("cors"));
 const fs = __importStar(require("fs"));
-const short_uuid_1 = __importDefault(require("short-uuid"));
 const express_1 = __importDefault(require("express"));
 const http_1 = __importDefault(require("http"));
 const socket_io_1 = require("socket.io");
 const passport_1 = __importDefault(require("passport"));
 const express_session_1 = __importDefault(require("express-session"));
-const mongodb_1 = require("mongodb");
-function generateRandomString(length) {
-    const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-    let result = "";
-    for (let i = 0; i < length; i++) {
-        const randomIndex = Math.floor(Math.random() * charset.length);
-        result += charset[randomIndex];
-    }
-    return result;
-}
-class Player {
-    constructor(socket) {
-        this.words = [];
-        this.score = 0;
-        this.isReady = false;
-        this.roomId = "menu";
-        this.googleId = "";
-        this.id = socket.id;
-        this.socket = socket;
-        this.name = 'Guest_' + generateRandomString(4);
-    }
-    addWord(word) {
-        this.words.push(word);
-    }
-    addScore(score) {
-        this.score += score;
-    }
-    reset() {
-        this.words = [];
-        this.score = 0;
-        this.isReady = false;
-    }
-}
-class Room {
-    constructor(id, owner, name, max_players, round_time, board_size) {
-        this.players = {};
-        this.board = {};
-        this.all_ready = false;
-        this.id = id;
-        this.owner = owner;
-        this.join(owner);
-        this.name = name;
-        this.max_players = max_players;
-        this.round_time = round_time;
-        this.board_size = board_size;
-        console.log('created room %s', this.id);
-    }
-    startGame() {
-        if (!this.checkReady())
-            return false;
-        this.generateBoard(this.board_size);
-        console.log('game started for room %s', this.id);
-        return true;
-    }
-    generateBoard(size) {
-        let letters = "AAAAAAAAABBCCDDDDEEEEEEEEEEEEFFGGGHHIIIIIIIIIJKLLLLMMNNNNNNOOOOOOOOPPQRRRRRRSSSSTTTTTTUUUUVVWWXYYZ";
-        for (let i = 0; i < size; i++) {
-            this.board[i] = [];
-            for (let j = 0; j < size; j++) {
-                this.board[i].push(letters[Math.floor(Math.random() * letters.length)]);
-            }
-        }
-        console.log('generated board for room %s', this.id);
-    }
-    join(player) {
-        if (Object.keys(this.players).includes(player.id))
-            return;
-        this.players[player.id] = player;
-        player.roomId = this.id;
-        console.log('player %s joined room %s', player.id, this.id);
-    }
-    leave(player) {
-        if (!Object.keys(this.players).includes(player.id))
-            return;
-        console.log('player %s left room %s', player.id, this.id);
-        delete this.players[player.id];
-        player.isReady = false;
-        if (player === this.owner) {
-            let new_owner = this.players[Object.keys(this.players)[0]];
-            if (new_owner === undefined)
-                return;
-            new_owner.isReady = true;
-            this.owner = new_owner;
-        }
-    }
-    checkReady() {
-        for (let i in this.players) {
-            let player = this.players[i];
-            if (!player.isReady) {
-                return false;
-            }
-        }
-        return true;
-    }
-    checkFinish() {
-        for (let i in this.players) {
-            let player = this.players[i];
-            if (player.isReady) {
-                return false;
-            }
-        }
-        return true;
-    }
-}
-const client_url = process.env.CLIENT_URL;
-const uuid = (0, short_uuid_1.default)();
-// reading in the wordlist
+// reading in the wordlists
 const wordList = fs.readFileSync('words.txt', 'utf8').replace(/(\r)/gm, "").split('\n');
-// setting up mongodb
-const user = process.env.DBUSER;
-const pass = process.env.DBPASS;
-const uri = "mongodb+srv://" + user + ":" + pass + "@webhunt-users.7qnfa.mongodb.net/?retryWrites=true&w=majority&appName=webhunt-users";
-// Create a MongoClient with a MongoClientOptions object to set the Stable API version
-const client = new mongodb_1.MongoClient(uri, {
-    serverApi: {
-        version: mongodb_1.ServerApiVersion.v1,
-        strict: true,
-        deprecationErrors: true,
-    }
-});
-function store_player(player, win) {
-    if (player.googleId !== "") {
-        console.log('storing player: ' + player.googleId);
-        client.connect().then(() => {
-            const db = client.db('webhunt-users');
-            const collection = db.collection('users');
-            collection.findOne({ googleId: player.googleId }).then((user) => {
-                if (user) {
-                    user.total_score += player.score;
-                    user.highest_score = Math.max(user.highest_score, player.score);
-                    user.games_played += 1;
-                    if (win)
-                        user.games_won += 1;
-                    user.avg_score_per_game = user.total_score / user.games_played;
-                    user.words_found += player.words.length;
-                    user.avg_score_per_word = user.total_score / user.words_found;
-                    collection.updateOne({ googleId: player.googleId }, {
-                        $set: {
-                            total_score: user.total_score,
-                            highest_score: user.highest_score,
-                            games_played: user.games_played,
-                            games_won: user.games_won,
-                            words_found: user.words_found,
-                            avg_score_per_game: user.avg_score_per_game,
-                            avg_score_per_word: user.avg_score_per_word,
-                        }
-                    });
-                }
-            });
-        });
-    }
-}
+const db = require('./db');
+const client_url = process.env.CLIENT_URL;
 // setting up server
 const app = (0, express_1.default)();
 require('./auth');
@@ -204,6 +55,7 @@ app.use((0, cors_1.default)({
     credentials: true, //access-control-allow-credentials:true
 }));
 app.set('trust proxy', 1);
+// using noleak memorystore
 const MemoryStore = require('memorystore')(express_session_1.default);
 app.use((0, express_session_1.default)({
     secret: "secret",
@@ -222,28 +74,34 @@ app.use((0, express_session_1.default)({
 app.use(passport_1.default.initialize());
 app.use(passport_1.default.session());
 app.use(passport_1.default.authenticate('session'));
+// homepage
 app.get("/", (_, res) => {
     res.send("Webhunt backend server");
 });
+// google auth page
 app.get("/auth/google", passport_1.default.authenticate('google', {
     scope: ['profile']
 }));
+// google callback page
 app.get("/google/callback", passport_1.default.authenticate('google', {
     session: true,
     successRedirect: client_url || 'https://webhunt.donger.ca',
     failureRedirect: client_url || 'https://webhunt.donger.ca'
 }));
+// auth middleware
 function isAuthenticated(req, res, next) {
     if (req.user)
         next();
     else
         res.json({ loggedIn: false });
 }
+// get user login information
 app.get("/account", isAuthenticated, (req, res) => {
     const user = Object.assign(Object.assign({}, req.user), { loggedIn: true });
     res.json(user);
 });
 const serv = http_1.default.createServer(app);
+// setting up socket.io
 const io = new socket_io_1.Server(serv, {
     cors: {
         origin: "https://webhunt.donger.ca",
@@ -251,19 +109,24 @@ const io = new socket_io_1.Server(serv, {
         methods: ["GET", "POST"],
     },
 });
+// listen on port 2001
 serv.listen(2001, () => {
     console.log(`Server running on 2001`);
 });
 // player list for tracking sockets
 // key is the socket id, value is the player object
 let player_list = {};
-// 
+// room list for tracking rooms
+// key is the room id, value is the room object
 let room_list = {};
+// all socket cpmmunication logic
 io.sockets.on('connection', (socket) => {
+    // create a new player object and add it to the player list on connection
     let new_player = new Player(socket);
     player_list[socket.id] = new_player;
     console.log('\nplayer connection %s', socket.id);
     console.log('players: %s', player_list);
+    // remove player from player list on disconnection
     socket.on('disconnect', () => {
         console.log('socket disconnection %s', socket.id);
         for (let i in room_list) {
@@ -274,6 +137,7 @@ io.sockets.on('connection', (socket) => {
         }
         delete player_list[socket.id];
     });
+    // when logged in, set googleid and name
     socket.on('login', (socketId, name, googleId) => {
         let player = player_list[socketId];
         if (player === undefined)
@@ -282,27 +146,33 @@ io.sockets.on('connection', (socket) => {
         player.googleId = googleId;
         player.socket.emit('logged_in');
     });
+    // check if player is logged in
     socket.on('check_login', (socketId, callback) => {
         let player = player_list[socketId];
         if (player === undefined)
-            callback({ status: false, message: 'player not found' });
+            callback({ status: false, message: 'requesting player not found' });
         else if (player.googleId === "")
             callback({ status: false, message: 'google id not found' });
         else
             callback({ status: true, message: 'logged in' });
     });
+    // room creation request
     socket.on('create_room', (socketId, room_info, callback) => {
+        // make sure the caller exists
         let owner = player_list[socketId];
         if (owner === undefined) {
             callback({ status: 'error', message: 'current player doesnt exist' });
             return;
         }
         ;
+        // owner is always ready
         owner.isReady = true;
+        // generate a random unique room id
         let id = generateRandomString(4);
         while (room_list[id] !== undefined) {
             id = generateRandomString(4);
         }
+        // if no name is provided, use the room id
         if (room_info.name === "") {
             room_info.name = id;
         }
@@ -311,9 +181,15 @@ io.sockets.on('connection', (socket) => {
         owner.socket.join(room.id);
         callback({ status: 'ok', room_id: room.id });
     });
+    // join room request
     socket.on('join_room', (socketId, roomId, callback) => {
         let room = room_list[roomId];
         let player = player_list[socketId];
+        if (player === undefined) {
+            callback({ status: 'error', message: 'requesting player not found' });
+            return;
+        }
+        ;
         if (room === undefined) {
             callback({ status: 'room_not_found' });
             return;
@@ -326,17 +202,26 @@ io.sockets.on('connection', (socket) => {
         room.join(player);
         callback({ status: 'ok' });
     });
+    // leave room request
     socket.on('leave_room', (socketId, roomId) => {
+        // make sure the caller exists
+        if (player_list[socketId] === undefined) {
+            return;
+        }
+        ;
         let room = room_list[roomId];
         if (room === undefined)
             return;
         room.leave(player_list[socketId]);
+        // delete room if empty
         if (Object.keys(room.players).length === 0) {
             console.log('room %s is empty, deleting', room.id);
             delete room_list[room.id];
         }
     });
+    // request room list on rooms list page
     socket.on('request_rooms', (socketId, callback) => {
+        // make sure the caller exists
         if (player_list[socketId] === undefined) {
             callback({ status: 'error', message: 'requesting player not found' });
             return;
@@ -355,9 +240,11 @@ io.sockets.on('connection', (socket) => {
         }
         callback({ status: 'ok', rooms: pack });
     });
+    // player ready signal
     socket.on('signal_ready', (socketId, roomId) => {
         let room = room_list[roomId];
         let player = player_list[socketId];
+        // make sure the caller and room exists
         if (room === undefined || player === undefined)
             return;
         if (room.owner == player)
@@ -365,10 +252,16 @@ io.sockets.on('connection', (socket) => {
         else
             player.isReady = !player.isReady;
     });
+    // start game signal
     socket.on('signal_start', (roomId, callback) => {
         console.log('start signalled from room %s', roomId);
         let room = room_list[roomId];
+        if (room === undefined) {
+            callback({ status: 'error', message: 'room not found' });
+            return;
+        }
         if (room.startGame()) {
+            // on successful start, reset all players and send game start signal
             for (let i in room.players) {
                 let player = room.players[i];
                 player.reset();
@@ -376,16 +269,18 @@ io.sockets.on('connection', (socket) => {
             }
         }
     });
+    // player finished game, submitting score
     socket.on('submit_score', (socketId, score, callback) => {
         let player = player_list[socketId];
         if (player === undefined) {
-            callback({ status: 'error', message: 'player not found' });
+            callback({ status: 'error', message: 'requesting player not found' });
             return;
         }
         ;
         player.score = score;
         callback({ status: 'ok', message: '' });
     });
+    // signal player is on the final screen
     socket.on('signal_finish', (socketId, roomId) => {
         let room = room_list[roomId];
         let cur_player = player_list[socketId];
@@ -393,24 +288,28 @@ io.sockets.on('connection', (socket) => {
             return;
         else
             cur_player.isReady = false;
+        // check if all players are on the final screen
         if (room.checkFinish()) {
             console.log('game finished for room %s', roomId);
             let final_scores = [];
+            // sort players by score
             for (let i in room.players) {
                 let player = room.players[i];
                 final_scores.push([player.name, player.score]);
             }
             final_scores.sort((a, b) => b[1] - a[1]);
+            // send scores to players
             for (let i in room.players) {
                 let player = room.players[i];
                 if (Object.keys(room.players).length !== 1) {
                     let win = player.score === final_scores[0][1];
-                    store_player(player, win);
+                    db.store_player(player, win);
                 }
                 player.socket.emit('update_scores', final_scores);
             }
         }
     });
+    // word handling
     socket.on('word', (socketId, word, callback) => {
         let player = player_list[socketId];
         if (player === undefined)
@@ -446,25 +345,26 @@ io.sockets.on('connection', (socket) => {
             }
         }
     });
+    // player stat request
     socket.on('request_stats', (socketId, callback) => {
         let player = player_list[socketId];
         if (player === undefined) {
-            callback({ status: 'error', message: 'player not found' });
+            callback({ status: 'error', message: 'requesting player not found' });
             return;
         }
         if (player.googleId === "") {
             callback({ status: 'error', message: 'player not found in db' });
             return;
         }
-        client.connect().then(() => {
-            const db = client.db('webhunt-users');
-            const collection = db.collection('users');
+        db.client.connect().then(() => {
+            const collection = db.client.db('webhunt-users').collection('users');
             collection.findOne({ googleId: player.googleId }).then((user) => {
                 callback({ status: 'ok', user: user });
             });
         });
     });
 });
+// every 10th of a second, send room info to all players in a room
 setInterval(() => {
     for (let i in room_list) {
         let room = room_list[i];
