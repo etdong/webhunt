@@ -1,4 +1,4 @@
-const { Player } = require('./Player.tsx')
+import { Player } from './Player';
 
 /**
  * Represents a game room where players can join, leave, and play a game.
@@ -6,15 +6,15 @@ const { Player } = require('./Player.tsx')
 export class Room {
     id: string;
     name: string;
-    owner: typeof Player;
+    owner: Player;
     max_players: number;
     round_time: number;
     board_size: number;
-    players: { [key: string]: typeof Player } = {};
+    players: { [key: string]: Player } = {};
     board: { [key: number]: string[] } = {};
     all_ready: boolean = false;
 
-    constructor(id: string, owner: typeof Player, name: string, max_players: number, round_time: number, board_size: number) {
+    constructor(id: string, owner: Player, name: string, max_players: number, round_time: number, board_size: number) {
         this.id = id;
         this.owner = owner;
         this.join(owner);
@@ -58,7 +58,7 @@ export class Room {
      * @param player 
      * @returns 
      */
-    public join(player: typeof Player) {
+    public join(player: Player) {
         if (Object.keys(this.players).includes(player.id)) return;
         this.players[player.id] = player;
         player.roomId = this.id;
@@ -70,7 +70,7 @@ export class Room {
      * @param player 
      * @returns 
      */
-    public leave(player: typeof Player) {
+    public leave(player: Player) {
         if (!Object.keys(this.players).includes(player.id)) return;
 
         console.log('player %s left room %s', player.id, this.id)
