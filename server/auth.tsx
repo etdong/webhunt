@@ -14,18 +14,22 @@ const client = new MongoClient(uri, {
     }
 });
 
+// we are using the google oauth strategy
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 
+// setting up passport
 passport.use(new GoogleStrategy({
         clientID: process.env.GOOGLE_CLIENT_ID,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
         callbackURL: "https://webhunt.onrender.com/google/callback"
     },
-    (accessToken: any, refreshToken: any, profile: any, cb: any) => {
+    (profile: any, cb: any) => {
+        // check if the user exists in the database
         client.connect().then(() => {
             const db = client.db('webhunt-users');
             const collection = db.collection('users');
             collection.findOne({ googleId: profile.id }).then((user) => {
+                // if the user does not exist, add them to the database
                 if (!user) {
                     collection.insertOne({
                         googleId: profile.id,
