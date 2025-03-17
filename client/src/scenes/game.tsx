@@ -4,6 +4,10 @@ import { updateCamPos, updateCamZoom } from "../utils/camUtils";
 
 import socket from "src/components/socket";
 
+/**
+ * Initializes the gameplay screen
+ * @param k KAPLAY context
+ */
 export default function init_game(k: KAPLAYCtx) {
     k.scene('game', (data) => {
 
@@ -18,6 +22,9 @@ export default function init_game(k: KAPLAYCtx) {
         let size = Object.keys(board).length;
         let side_length = 128 * size;
 
+
+        // draw components
+        // create background an recenter camera
         let background = k.add([
             k.rect(k.width(), k.height()),
             k.anchor('center'),
@@ -26,11 +33,12 @@ export default function init_game(k: KAPLAYCtx) {
         updateCamPos(k, background.pos);
         updateCamZoom(k);
 
+        // setting the camera scale to fit the size of the board
         k.setCamScale(k.getCamScale().x * 5/size);
 
-        // component drawing
         let board_container = drawBoard(k, size);
 
+        // score counter
         let score_output = k.add([
             k.text('score:' + total_score, { size: 48, font: 'gaegu' }),
             k.pos(board_container.pos.x - board_container.width/2, board_container.pos.y - board_container.height/2 - 64),
@@ -38,6 +46,7 @@ export default function init_game(k: KAPLAYCtx) {
             'output'
         ])
 
+        // found word text
         let word_output = k.add([
             k.text('', { size: 64, font: 'gaegu', align: 'center'}),   
             k.pos(board_container.pos.x, board_container.pos.y + board_container.height/2 + 96),
@@ -46,6 +55,7 @@ export default function init_game(k: KAPLAYCtx) {
             'output'
         ])
 
+        // timer text
         k.add([
             k.anchor('topright'),
             k.text('time: ', { size: 48, font: 'gaegu', align: 'right'}),
@@ -62,6 +72,7 @@ export default function init_game(k: KAPLAYCtx) {
             k.color(0, 0, 0),
         ]);
 
+        // timer is counted down client side
         k.loop(1, () => {
             time -= 1;
             timer_output.text = time.toString();
@@ -76,6 +87,7 @@ export default function init_game(k: KAPLAYCtx) {
             }
         })
         
+        // drawing the letters on the board received from the server
         for (let i = 0; i < size; i++) {
             for (let j = 0; j < size; j++) {   
                 let letterPos = k.vec2(k.center().sub(side_length/2 - 64 - i * 128, side_length/2 - 64 - j * 128))
@@ -121,6 +133,8 @@ export default function init_game(k: KAPLAYCtx) {
                 ])
             }   
         }
+
+        // drawing the lines connecting the letters when selecting
         k.onDraw(() => {
             k.drawLines({ 
                 pts: points, 
@@ -131,10 +145,8 @@ export default function init_game(k: KAPLAYCtx) {
         })
 
 
-
         // event handlers
-        
-
+        // selecting letters
         k.onHoverUpdate('letter', (letter) => {
             if (k.isMouseDown('left')) {
                 if (!(selected.includes(letter))) {
@@ -158,6 +170,7 @@ export default function init_game(k: KAPLAYCtx) {
             }
         })
 
+        // submitting the word
         k.onMouseRelease('left', () => {
             points = [];
             if (selected.length > 2) {
@@ -179,6 +192,7 @@ export default function init_game(k: KAPLAYCtx) {
             selected = [];
         })
 
+        // updating camera position
         k.onUpdate(() => {
             updateCamPos(k, board_container.pos);
         })

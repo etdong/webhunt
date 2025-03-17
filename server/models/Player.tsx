@@ -1,4 +1,4 @@
-const utils = require('../utils');
+import * as utils from '../utils';
 
 /**
  * Represents a player in the game.

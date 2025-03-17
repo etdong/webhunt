@@ -1,13 +1,21 @@
 import { GameObj, KAPLAYCtx } from "kaplay";
-
-import socket from "src/components/socket";
 import { updateCamPos, updateCamZoom } from "src/utils/camUtils";
 
+import socket from "src/components/socket";
+
+/**
+ * Initializes the room/lobby screen
+ * @param k KAPLAY context
+ */
 export default function init_room(k: KAPLAYCtx) {
     k.scene('room', () => {
+
+        // declarations
         let player_names: string[] = [];
         let ready_states: boolean[] = [];
 
+        // draw components
+        // create background an recenter camera
         let background = k.add([
             k.rect(k.width(), k.height()),
             k.anchor('center'),
@@ -16,6 +24,7 @@ export default function init_room(k: KAPLAYCtx) {
         updateCamPos(k, background.pos);
         updateCamZoom(k);
 
+        // drawing the room components
         let elements = draw_room(k);
         let room_name = elements[0];
         let max_players = elements[1];
@@ -27,6 +36,7 @@ export default function init_room(k: KAPLAYCtx) {
         let start = elements[7];
         let ready = elements[8];
 
+        // button click events
         leave.onClick(() => {
             socket.emit('leave_room', socket.id, room_id.text);
             k.go('menu');
@@ -47,6 +57,7 @@ export default function init_room(k: KAPLAYCtx) {
             socket.emit('signal_start', room_id.text);
         })
 
+        // socket game start event
         socket.off('game_start').on('game_start', (board: any, round_time) => {
             k.go('game', { 
                 board: board, 
@@ -55,6 +66,7 @@ export default function init_room(k: KAPLAYCtx) {
             });
         })
 
+        // receive room info from server
         socket.off('room_info').on('room_info', (room: any, isOwner: boolean) => {
             room_name.text = room.name;
             player_names = room.players.names;
@@ -76,6 +88,7 @@ export default function init_room(k: KAPLAYCtx) {
             }
         })
 
+        // button hover animation
         k.onHover('menu_button', (btn) => {
             k.tween(
                 btn.scale,
@@ -96,6 +109,7 @@ export default function init_room(k: KAPLAYCtx) {
             )
         })
 
+        // draw player names and ready states
         k.onDraw(() => {
             for (let i = 0; i < player_names.length; i++) {
                 let name = player_names[i];
@@ -122,6 +136,7 @@ export default function init_room(k: KAPLAYCtx) {
             }
         })
 
+        // constantly update camera position and zoom
         k.onUpdate(() => {
             updateCamPos(k, background.pos);
             updateCamZoom(k);
@@ -129,20 +144,29 @@ export default function init_room(k: KAPLAYCtx) {
     })
 }
 
+/**
+ * Draws the room screen differntly based on the window size
+ * @param k KAPLAY context
+ * @returns The elements of the room screen
+ */
 function draw_room(k: KAPLAYCtx) {
+    // desktop layout
     let base_pos = k.center()
     let x_offset = 0
     let y_offset = 0;
     let lobby_pos = k.center()
     let buttons_pos = k.center().add(-192, 256)
     console.log(k.getCamScale().x)
+
     if (k.getCamScale().x !== 1) {
+        // mobile/vertical layout
         x_offset = -160
         y_offset = 160
         lobby_pos = k.center().add(-282, 128)
         buttons_pos = base_pos.add(0, 512)
     }
     
+    // labels
     k.add([
         k.text('max. players:', { size: 48, font: 'gaegu' }),
         k.pos(base_pos.x - x_offset - 128, base_pos.y - y_offset - 256),
@@ -171,6 +195,7 @@ function draw_room(k: KAPLAYCtx) {
         k.color(0, 0, 0),
     ])
 
+    // info fields
     let room_name = k.add([
         k.text('...', { size: 64, font: 'gaegu' }),
         k.pos(base_pos.x, base_pos.y - y_offset - 360),
@@ -213,6 +238,7 @@ function draw_room(k: KAPLAYCtx) {
         k.outline(4)
     ])
 
+    // buttons
     let leave = k.add([
         k.text('leave', { size: 64, font: 'gaegu' }),
         k.pos(buttons_pos.add(-96, 0)),
@@ -223,6 +249,8 @@ function draw_room(k: KAPLAYCtx) {
         'menu_button',
     ])
 
+    // start/ready buttons start hidden and are shown based on the player's role
+    // owner can start the game, other players can signal that they are ready
     let start = k.add([
         k.text('start', { size: 64, font: 'gaegu' }),
         k.pos(buttons_pos.add(96, 0)),
@@ -246,8 +274,7 @@ function draw_room(k: KAPLAYCtx) {
             ready: false,
         }
     ])
-
-    start.hidden = true;
+    ready.hidden = true;
 
     let elements: GameObj[] = [room_name, max_players, round_time, board_size, room_id, lobby, leave, start, ready]
     return elements

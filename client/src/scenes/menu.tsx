@@ -3,6 +3,10 @@ import { getRelativeMousePos, updateCamPos, updateCamZoom } from "../utils/camUt
 
 import socket from "src/components/socket";
 
+/**
+ * Initializes the menu screen
+ * @param k KAPLAY context
+ */
 export default function init_menu(k: KAPLAYCtx) {
     k.scene('menu', () => {
 
@@ -11,6 +15,7 @@ export default function init_menu(k: KAPLAYCtx) {
         let loggedIn = false;
 
         // draw components
+        // create background an recenter camera
         let background = k.add([
             k.rect(k.width(), k.height()),
             k.area(),
@@ -18,10 +23,10 @@ export default function init_menu(k: KAPLAYCtx) {
             k.anchor('center'),
             k.pos(k.center()),
         ])
-
         updateCamPos(k, background.pos);
         updateCamZoom(k);
 
+        // menu buttons
         let menu_labels = ['rooms list', 'create a room', 'join by code', 'stats'];
         let menu_buttons: any[] = [];
 
@@ -39,19 +44,10 @@ export default function init_menu(k: KAPLAYCtx) {
             menu_buttons.push(button);
         }
 
-
+        // interactive title
         let letters = draw_title(k);
         
-
-        // event handlers
-        k.onClick('', (object) => {
-            if (object.tags.includes('letter')) {
-                clicked = object;
-            } else {
-                clicked = null;
-            }
-        })
-
+        // menu button click events
         k.onClick('menu_button', (btn) => {
             if (btn.text === 'rooms list') {
                 k.go('rooms_list');
@@ -64,6 +60,65 @@ export default function init_menu(k: KAPLAYCtx) {
             }
         })
 
+        // letter click and drag event
+        k.onClick('', (object) => {
+            if (object.tags.includes('letter')) {
+                clicked = object;
+            } else {
+                clicked = null;
+            }
+        })
+
+        // letter picked up
+        k.onMouseDown("left", () => {
+            if (clicked !== null) {
+                k.tween(
+                    clicked.scale,
+                    k.vec2(0.6),
+                    0.1,
+                    (newScale) => clicked.scale = newScale,
+                    k.easings.linear
+                )
+                k.tween(
+                    clicked.pos,
+                    getRelativeMousePos(k),
+                    0.1,
+                    (newPos) => clicked.pos = newPos,
+                    k.easings.easeOutQuad
+                )
+            }
+        })
+
+        // letter dropped
+        k.onMouseRelease("left", () => {
+            if (clicked !== null) {
+                k.tween(
+                    clicked.scale,
+                    k.vec2(0.5),
+                    0.1,
+                    (newScale) => clicked.scale = newScale,
+                    k.easings.linear
+                )
+            }
+        })
+        
+        // drawing text in the letters
+        k.onDraw(() => {
+            for (let i in letters) {
+                k.drawText({
+                    text: letters[i].tags[2],
+                    anchor: 'center',
+                    pos: letters[i].pos,
+                    size: 64,
+                    scale: letters[i].scale.x * 2,
+                    font: 'gaegu',
+                    color: k.rgb(0, 0, 0),
+                });
+            }
+        })
+
+
+        // letter hover animation
         k.onHover('letter', (letter) => {
             k.tween(
                 letter.scale,
@@ -73,7 +128,6 @@ export default function init_menu(k: KAPLAYCtx) {
                 k.easings.linear
             )
         })
-
 
         k.onHoverEnd('letter', (letter) => {
             k.tween(
@@ -85,6 +139,7 @@ export default function init_menu(k: KAPLAYCtx) {
             )
         })
 
+        // menu button hover animation
         k.onHover('menu_button', (btn) => {
             k.tween(
                 btn.scale,
@@ -105,54 +160,9 @@ export default function init_menu(k: KAPLAYCtx) {
             )
         })
 
-        k.onMouseDown("left", () => {
-            if (clicked !== null) {
-                k.tween(
-                    clicked.scale,
-                    k.vec2(0.6),
-                    0.1,
-                    (newScale) => clicked.scale = newScale,
-                    k.easings.linear
-                )
-                k.tween(
-                    clicked.pos,
-                    getRelativeMousePos(k),
-                    0.1,
-                    (newPos) => clicked.pos = newPos,
-                    k.easings.easeOutQuad
-                )
-            }
-        })
-
-        k.onMouseRelease("left", () => {
-            if (clicked !== null) {
-                k.tween(
-                    clicked.scale,
-                    k.vec2(0.5),
-                    0.1,
-                    (newScale) => clicked.scale = newScale,
-                    k.easings.linear
-                )
-            }
-        })
-        
-        k.onDraw(() => {
-            for (let i in letters) {
-                k.drawText({
-                    text: letters[i].tags[2],
-                    anchor: 'center',
-                    pos: letters[i].pos,
-                    size: 64,
-                    scale: letters[i].scale.x * 2,
-                    font: 'gaegu',
-                    color: k.rgb(0, 0, 0),
-                });
-            }
-        })
-
         socket.on('logged_in', () => loggedIn = true);
-
         k.onUpdate(() => {
+            // check user login status to enable stats button
             if (!loggedIn) {
                 menu_buttons[3].text = 'log in to see stats'
                 menu_buttons[3].color = k.rgb(128, 128, 128);
@@ -160,8 +170,11 @@ export default function init_menu(k: KAPLAYCtx) {
                 menu_buttons[3].text = 'stats';
                 menu_buttons[3].color = k.rgb(0, 0, 0);
             }
+
+            // constantly update camera position and zoom
             updateCamPos(k, background.pos);
             updateCamZoom(k);
+            // recenter offscreen letters
             for (let i in letters) {
                 if (letters[i].hidden) {
                     letters[i].pos = k.center().sub(k.rand(-100, 100), 300 + k.rand(-100, 100));
@@ -173,6 +186,11 @@ export default function init_menu(k: KAPLAYCtx) {
     });
 }
 
+/**
+ * Draws the title of the game with interactive letter blocks
+ * @param k KAPLAY context
+ * @returns The array of interactive letters
+ */
 function draw_title(k: KAPLAYCtx) {
     let letters: GameObj[] = [];
     let title = "WEBHUNT"

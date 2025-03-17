@@ -5,14 +5,14 @@ import http from 'http'
 import { Server } from 'socket.io'
 import passport from 'passport';
 import session from 'express-session';
+import { Player } from './models/Player';
+import { Room } from './models/Room';
+import * as utils from './utils';
 
 // reading in the wordlists
 const wordList = fs.readFileSync('words.txt','utf8').replace(/(\r)/gm, "").split('\n');
 
 const db = require('./db')
-const { Room } = require('./models/Room')
-const { Player } = require('./models/Player')
-const utils = require('./utils')
 const client_url = process.env.CLIENT_URL;
 
 
@@ -110,7 +110,7 @@ let player_list: { [key: string]: any } = {};
 
 // room list for tracking rooms
 // key is the room id, value is the room object
-let room_list: { [key: string]: typeof Room } = {};
+let room_list: { [key: string]: Room } = {};
 
 // all socket cpmmunication logic
 io.sockets.on('connection', (socket: any) => {
@@ -403,8 +403,8 @@ setInterval(() => {
             round_time: room.round_time,
             board_size: room.board_size,
             players: {
-                names: Object.values(room.players).map((player: typeof Player) => player.name),
-                ready_states: Object.values(room.players).map((player: typeof Player) => player.isReady),
+                names: Object.values(room.players).map((player: Player) => player.name),
+                ready_states: Object.values(room.players).map((player: Player) => player.isReady),
             }
         }
 

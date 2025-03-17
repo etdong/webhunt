@@ -3,18 +3,24 @@ import { updateCamPos, updateCamZoom } from "../utils/camUtils";
 
 import socket from "src/components/socket";
 
+/**
+ * Initializes the create room scene
+ * @param k KAPLAY context
+ */
 export default function init_create_room(k: KAPLAYCtx) {
     k.scene('create_room', () => {
 
+        // draw components
+        // create background an recenter camera
         let background = k.add([
             k.rect(k.width(), k.height()),
             k.anchor('center'),
             k.pos(k.center()),
         ])
-
         updateCamPos(k, background.pos);
         updateCamZoom(k);
-
+        
+        // screen title
         k.add([
             k.text('Create a room', { size: 64, font: 'gaegu' }),
             k.pos(k.center().x, k.center().y - 360),
@@ -22,6 +28,7 @@ export default function init_create_room(k: KAPLAYCtx) {
             k.color(0, 0, 0),
         ])
 
+        // cancel button
         let cancel = k.add([
             k.text('cancel', { size: 64, font: 'gaegu' }),
             k.pos(k.center().x - 128, k.center().y + 320),
@@ -32,6 +39,7 @@ export default function init_create_room(k: KAPLAYCtx) {
             'menu_button',
         ])
 
+        // create button
         let create = k.add([
             k.text('create', { size: 64, font: 'gaegu' }),
             k.pos(k.center().x + 128, k.center().y + 320),
@@ -43,28 +51,9 @@ export default function init_create_room(k: KAPLAYCtx) {
         ])
 
         const fields = init_fields(k);
+
         
-        k.onHover('menu_button', (btn) => {
-            k.tween(
-                btn.scale,
-                k.vec2(1.2),
-                0.1,
-                (newScale) => btn.scale = newScale,
-                k.easings.linear
-            )
-        })
-
-
-        k.onHoverEnd('menu_button', (btn) => {
-            k.tween(
-                btn.scale,
-                k.vec2(1),
-                0.1,
-                (newScale) => btn.scale = newScale,
-                k.easings.linear
-            )
-        })
-
+        // menu button click events
         cancel.onClick(() => {
             k.go('menu');
         })
@@ -86,6 +75,28 @@ export default function init_create_room(k: KAPLAYCtx) {
             })
         })
 
+        // button hover animations
+        k.onHover('menu_button', (btn) => {
+            k.tween(
+                btn.scale,
+                k.vec2(1.2),
+                0.1,
+                (newScale) => btn.scale = newScale,
+                k.easings.linear
+            )
+        })
+
+        k.onHoverEnd('menu_button', (btn) => {
+            k.tween(
+                btn.scale,
+                k.vec2(1),
+                0.1,
+                (newScale) => btn.scale = newScale,
+                k.easings.linear
+            )
+        })
+
+        // constantly update camera position and zoom
         k.onUpdate(() => {
             updateCamPos(k, background.pos);
             updateCamZoom(k);
@@ -93,7 +104,13 @@ export default function init_create_room(k: KAPLAYCtx) {
     });
 }
 
+/**
+ * Creates the input fields for the create room scene
+ * @param k KAPLAY context
+ * @returns Array of the initialized input fields
+ */
 const init_fields = (k: KAPLAYCtx) => {
+
     // name field
     const inputRect = new k.Rect(k.vec2(0), 24*16, 68)
     k.add([
@@ -102,7 +119,6 @@ const init_fields = (k: KAPLAYCtx) => {
         k.anchor('center'),
         k.color(0, 0, 0),
     ])
-
     let name_pos = k.vec2(k.center().x, k.center().y - 210);
     let name_input = k.add([
         k.text('', { size: 64, font: 'gaegu' }),
@@ -114,6 +130,7 @@ const init_fields = (k: KAPLAYCtx) => {
         k.scale(1),
     ]);
 
+    // input field bounding box
     k.add([
         k.rect(inputRect.width, inputRect.height, {fill: false}),
         k.pos(name_pos),
@@ -130,6 +147,7 @@ const init_fields = (k: KAPLAYCtx) => {
         k.color(0, 0, 0),
     ])
 
+    // player count increase arrow
     k.add([
         k.polygon([
             k.vec2(0, 0),
@@ -144,6 +162,7 @@ const init_fields = (k: KAPLAYCtx) => {
         'players_up',   
     ])
 
+    // player count decrease arrow
     k.add([
         k.polygon([
             k.vec2(0, 0),
@@ -158,6 +177,7 @@ const init_fields = (k: KAPLAYCtx) => {
         'players_down',
     ])
 
+    // player count label
     let player_count = k.add([
         k.text('2', { size: 48, font: 'gaegu' }),
         k.pos(k.center().x + 160, max_players_pos.y),
@@ -254,12 +274,17 @@ const init_fields = (k: KAPLAYCtx) => {
         k.color(0, 0, 0),
     ])
 
+    // onclick events for the input fields
+
+    // name input calls to a prompt
+    // the name field auto focuses on desktop, so this is mostly for mobile users
     name_input.onClick(() => {
         let text = prompt('enter a room name: ');
         if (text === null) return;
         name_input.text = text;
     })
 
+    // increase and decrease button functionality for player count, time, and board size
     k.onClick('players_up', () => {
         let count = parseInt(player_count.text);
         if (count < 16) count++;

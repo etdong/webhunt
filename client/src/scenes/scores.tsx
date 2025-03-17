@@ -3,13 +3,25 @@ import { updateCamPos, updateCamZoom } from "../utils/camUtils";
 
 import socket from "src/components/socket";
 
+/**
+ * Initializes the post-game scores screen
+ * @param k KAPLAYCtx
+ */
 export default function init_scores(k: KAPLAYCtx) {
     k.scene('scores', (room_id) => {
 
+        // signal to the server that this client has finished the game
         socket.emit('signal_finish', socket.id, room_id);
-        
+        // listen for score updates from the server
+        socket.off('update_scores').on('update_scores', (data: [string, number][]) => {
+            scores = data;
+        })
+
+        // declarations
         let scores: [string, number][] = []
 
+        // draw components
+        // screen title
         k.add([
             k.text('final scores', { size: 64, font: 'gaegu' }),
             k.pos(k.center().x, k.center().y - 360),
@@ -17,6 +29,7 @@ export default function init_scores(k: KAPLAYCtx) {
             k.color(0, 0, 0),
         ])
 
+        // scores container outline
         let scores_container = k.add([
             k.rect(512, 512, { fill: false }),
             k.pos(k.center().sub(0, 40)),
@@ -24,6 +37,7 @@ export default function init_scores(k: KAPLAYCtx) {
             k.outline(4)
         ])
 
+        // back button
         let back = k.add([
             k.text('done', { size: 64, font: 'gaegu' }),
             k.pos(k.center().x, k.center().y + 320),
@@ -34,14 +48,11 @@ export default function init_scores(k: KAPLAYCtx) {
             'menu_button',
         ])
 
-        socket.off('update_scores').on('update_scores', (data: [string, number][]) => {
-            scores = data;
-        })
-
         back.onClick(() => {
             k.go('room');
         })
 
+        // hover animations
         k.onHover('menu_button', (btn) => {
             k.tween(
                 btn.scale,
@@ -62,6 +73,7 @@ export default function init_scores(k: KAPLAYCtx) {
             )
         })
 
+        // draw scores every update
         k.onUpdate(() => {
             let j = 0;
             for (let i in scores) {
