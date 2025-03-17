@@ -46,6 +46,9 @@ const express_session_1 = __importDefault(require("express-session"));
 // reading in the wordlists
 const wordList = fs.readFileSync('words.txt', 'utf8').replace(/(\r)/gm, "").split('\n');
 const db = require('./db');
+const { Room } = require('./models/Room');
+const { Player } = require('./models/Player');
+const utils = require('./utils');
 const client_url = process.env.CLIENT_URL;
 // setting up server
 const app = (0, express_1.default)();
@@ -168,9 +171,9 @@ io.sockets.on('connection', (socket) => {
         // owner is always ready
         owner.isReady = true;
         // generate a random unique room id
-        let id = generateRandomString(4);
+        let id = utils.generateRandomString(4);
         while (room_list[id] !== undefined) {
-            id = generateRandomString(4);
+            id = utils.generateRandomString(4);
         }
         // if no name is provided, use the room id
         if (room_info.name === "") {

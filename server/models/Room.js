@@ -1,4 +1,7 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Room = void 0;
+const { Player } = require('./Player.tsx');
 /**
  * Represents a game room where players can join, leave, and play a game.
  */
@@ -100,3 +103,4 @@ class Room {
         return true;
     }
 }
+exports.Room = Room;

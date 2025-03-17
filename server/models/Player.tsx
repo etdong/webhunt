@@ -1,9 +1,9 @@
-let utils = require('../utils');
+const utils = require('../utils');
 
 /**
  * Represents a player in the game.
  */
-class Player {
+export class Player {
     id: string;
     name: string;
     socket: any;
