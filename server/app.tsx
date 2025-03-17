@@ -10,7 +10,11 @@ import session from 'express-session';
 const wordList = fs.readFileSync('words.txt','utf8').replace(/(\r)/gm, "").split('\n');
 
 const db = require('./db')
+const { Room } = require('./models/Room')
+const { Player } = require('./models/Player')
+const utils = require('./utils')
 const client_url = process.env.CLIENT_URL;
+
 
 // setting up server
 const app = express();
@@ -106,7 +110,7 @@ let player_list: { [key: string]: any } = {};
 
 // room list for tracking rooms
 // key is the room id, value is the room object
-let room_list: { [key: string]: Room } = {};
+let room_list: { [key: string]: typeof Room } = {};
 
 // all socket cpmmunication logic
 io.sockets.on('connection', (socket: any) => {
@@ -162,9 +166,9 @@ io.sockets.on('connection', (socket: any) => {
         owner.isReady = true;
 
         // generate a random unique room id
-        let id = generateRandomString(4);
+        let id = utils.generateRandomString(4);
         while (room_list[id] !== undefined) {   
-            id = generateRandomString(4);
+            id = utils.generateRandomString(4);
         }
 
         // if no name is provided, use the room id
@@ -399,8 +403,8 @@ setInterval(() => {
             round_time: room.round_time,
             board_size: room.board_size,
             players: {
-                names: Object.values(room.players).map((player: Player) => player.name),
-                ready_states: Object.values(room.players).map((player: Player) => player.isReady),
+                names: Object.values(room.players).map((player: typeof Player) => player.name),
+                ready_states: Object.values(room.players).map((player: typeof Player) => player.isReady),
             }
         }
 

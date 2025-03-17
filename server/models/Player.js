@@ -1,5 +1,7 @@
 "use strict";
-let utils = require('../utils');
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Player = void 0;
+const utils = require('../utils');
 /**
  * Represents a player in the game.
  */
@@ -26,3 +28,4 @@ class Player {
         this.isReady = false;
     }
 }
+exports.Player = Player;
