@@ -1,5 +1,11 @@
 import { KAPLAYCtx } from "kaplay";
 
+/**
+ * Draw the bounding box for the board in game
+ * @param k KAPLAY context
+ * @param size board size
+ * @returns The board object
+ */
 export default function drawBoard(k: KAPLAYCtx, size: number) {
     let side_length = 128 * size;
 
